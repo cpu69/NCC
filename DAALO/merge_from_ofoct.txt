@@ -1,0 +1,4249 @@
+// C++ program to insert a node in AVL tree
+#include<bits/stdc++.h>
+using namespace std;
+
+// An AVL tree node
+class Node
+{
+	public:
+	int key;
+	Node *left;
+	Node *right;
+	int height;
+};
+
+// A utility function to get maximum
+// of two integers
+int max(int a, int b);
+
+// A utility function to get the
+// height of the tree
+int height(Node *N)
+{
+	if (N == NULL)
+		return 0;
+	return N->height;
+}
+
+// A utility function to get maximum
+// of two integers
+int max(int a, int b)
+{
+	return (a > b)? a : b;
+}
+
+/* Helper function that allocates a
+new node with the given key and
+NULL left and right pointers. */
+Node* newNode(int key)
+{
+	Node* node = new Node();
+	node->key = key;
+	node->left = NULL;
+	node->right = NULL;
+	node->height = 1; // new node is initially
+					// added at leaf
+	return(node);
+}
+
+// A utility function to right
+// rotate subtree rooted with y
+// See the diagram given above.
+Node *rightRotate(Node *y)
+{
+	Node *x = y->left;
+	Node *T2 = x->right;
+
+	// Perform rotation
+	x->right = y;
+	y->left = T2;
+
+	// Update heights
+	y->height = max(height(y->left),
+					height(y->right)) + 1;
+	x->height = max(height(x->left),
+					height(x->right)) + 1;
+
+	// Return new root
+	return x;
+}
+
+// A utility function to left
+// rotate subtree rooted with x
+// See the diagram given above.
+Node *leftRotate(Node *x)
+{
+	Node *y = x->right;
+	Node *T2 = y->left;
+
+	// Perform rotation
+	y->left = x;
+	x->right = T2;
+
+	// Update heights
+	x->height = max(height(x->left),
+					height(x->right)) + 1;
+	y->height = max(height(y->left),
+					height(y->right)) + 1;
+
+	// Return new root
+	return y;
+}
+
+// Get Balance factor of node N
+int getBalance(Node *N)
+{
+	if (N == NULL)
+		return 0;
+	return height(N->left) - height(N->right);
+}
+
+// Recursive function to insert a key
+// in the subtree rooted with node and
+// returns the new root of the subtree.
+Node* insert(Node* node, int key)
+{
+	/* 1. Perform the normal BST insertion */
+	if (node == NULL)
+		return(newNode(key));
+
+	if (key < node->key)
+		node->left = insert(node->left, key);
+	else if (key > node->key)
+		node->right = insert(node->right, key);
+	else // Equal keys are not allowed in BST
+		return node;
+
+	/* 2. Update height of this ancestor node */
+	node->height = 1 + max(height(node->left),
+						height(node->right));
+
+	/* 3. Get the balance factor of this ancestor
+		node to check whether this node became
+		unbalanced */
+	int balance = getBalance(node);
+
+	// If this node becomes unbalanced, then
+	// there are 4 cases
+
+	// Left Left Case
+	if (balance > 1 && key < node->left->key)
+		return rightRotate(node);
+
+	// Right Right Case
+	if (balance < -1 && key > node->right->key)
+		return leftRotate(node);
+
+	// Left Right Case
+	if (balance > 1 && key > node->left->key)
+	{
+		node->left = leftRotate(node->left);
+		return rightRotate(node);
+	}
+
+	// Right Left Case
+	if (balance < -1 && key < node->right->key)
+	{
+		node->right = rightRotate(node->right);
+		return leftRotate(node);
+	}
+
+	/* return the (unchanged) node pointer */
+	return node;
+}
+
+// A utility function to print preorder
+// traversal of the tree.
+// The function also prints height
+// of every node
+void preOrder(Node *root)
+{
+	if(root != NULL)
+	{
+		cout << root->key << " ";
+		preOrder(root->left);
+		preOrder(root->right);
+	}
+}
+
+// Driver Code
+int main()
+{
+	Node *root = NULL;
+	
+	/* Constructing tree given in
+	the above figure */
+	root = insert(root, 10);
+	root = insert(root, 20);
+	root = insert(root, 30);
+	root = insert(root, 40);
+	root = insert(root, 50);
+	root = insert(root, 25);
+	
+	/* The constructed AVL Tree would be
+				30
+			/ \
+			20 40
+			/ \ \
+		10 25 50
+	*/
+	cout << "Preorder traversal of the "
+			"constructed AVL tree is \n";
+	preOrder(root);
+	
+	return 0;
+}
+
+// This code is contributed by
+// rathbhupendra
+__________________________________________________________________________________________// A C++ program for Bellman-Ford's single source
+// shortest path algorithm.
+#include <bits/stdc++.h>
+
+// a structure to represent a weighted edge in graph
+struct Edge {
+	int src, dest, weight;
+};
+
+// a structure to represent a connected, directed and
+// weighted graph
+struct Graph {
+	// V-> Number of vertices, E-> Number of edges
+	int V, E;
+
+	// graph is represented as an array of edges.
+	struct Edge* edge;
+};
+
+// Creates a graph with V vertices and E edges
+struct Graph* createGraph(int V, int E)
+{
+	struct Graph* graph = new Graph;
+	graph->V = V;
+	graph->E = E;
+	graph->edge = new Edge[E];
+	return graph;
+}
+
+// A utility function used to print the solution
+void printArr(int dist[], int n)
+{
+	printf("Vertex Distance from Source\n");
+	for (int i = 0; i < n; ++i)
+		printf("%d \t\t %d\n", i, dist[i]);
+}
+
+// The main function that finds shortest distances from src
+// to all other vertices using Bellman-Ford algorithm. The
+// function also detects negative weight cycle
+void BellmanFord(struct Graph* graph, int src)
+{
+	int V = graph->V;
+	int E = graph->E;
+	int dist[V];
+
+	// Step 1: Initialize distances from src to all other
+	// vertices as INFINITE
+	for (int i = 0; i < V; i++)
+		dist[i] = INT_MAX;
+	dist[src] = 0;
+
+	// Step 2: Relax all edges |V| - 1 times. A simple
+	// shortest path from src to any other vertex can have
+	// at-most |V| - 1 edges
+	for (int i = 1; i <= V - 1; i++) {
+		for (int j = 0; j < E; j++) {
+			int u = graph->edge[j].src;
+			int v = graph->edge[j].dest;
+			int weight = graph->edge[j].weight;
+			if (dist[u] != INT_MAX
+				&& dist[u] + weight < dist[v])
+				dist[v] = dist[u] + weight;
+		}
+	}
+
+	// Step 3: check for negative-weight cycles. The above
+	// step guarantees shortest distances if graph doesn't
+	// contain negative weight cycle. If we get a shorter
+	// path, then there is a cycle.
+	for (int i = 0; i < E; i++) {
+		int u = graph->edge[i].src;
+		int v = graph->edge[i].dest;
+		int weight = graph->edge[i].weight;
+		if (dist[u] != INT_MAX
+			&& dist[u] + weight < dist[v]) {
+			printf("Graph contains negative weight cycle");
+			return; // If negative cycle is detected, simply
+					// return
+		}
+	}
+
+	printArr(dist, V);
+
+	return;
+}
+
+// Driver program to test above functions
+int main()
+{
+	/* Let us create the graph given in above example */
+	int V = 5; // Number of vertices in graph
+	int E = 8; // Number of edges in graph
+	struct Graph* graph = createGraph(V, E);
+
+	// add edge 0-1 (or A-B in above figure)
+	graph->edge[0].src = 0;
+	graph->edge[0].dest = 1;
+	graph->edge[0].weight = -1;
+
+	// add edge 0-2 (or A-C in above figure)
+	graph->edge[1].src = 0;
+	graph->edge[1].dest = 2;
+	graph->edge[1].weight = 4;
+
+	// add edge 1-2 (or B-C in above figure)
+	graph->edge[2].src = 1;
+	graph->edge[2].dest = 2;
+	graph->edge[2].weight = 3;
+
+	// add edge 1-3 (or B-D in above figure)
+	graph->edge[3].src = 1;
+	graph->edge[3].dest = 3;
+	graph->edge[3].weight = 2;
+
+	// add edge 1-4 (or B-E in above figure)
+	graph->edge[4].src = 1;
+	graph->edge[4].dest = 4;
+	graph->edge[4].weight = 2;
+
+	// add edge 3-2 (or D-C in above figure)
+	graph->edge[5].src = 3;
+	graph->edge[5].dest = 2;
+	graph->edge[5].weight = 5;
+
+	// add edge 3-1 (or D-B in above figure)
+	graph->edge[6].src = 3;
+	graph->edge[6].dest = 1;
+	graph->edge[6].weight = 1;
+
+	// add edge 4-3 (or E-D in above figure)
+	graph->edge[7].src = 4;
+	graph->edge[7].dest = 3;
+	graph->edge[7].weight = -3;
+
+	BellmanFord(graph, 0);
+
+	return 0;
+}
+__________________________________________________________________________________________
+#include <stdio.h>
+#include <stdlib.h>
+#define SIZE 40  
+
+typedef struct queue {
+  int items[SIZE];
+  int front;
+  int rear;
+} QUEUE;
+
+QUEUE* createQueue();
+void enqueue(QUEUE* q, int);
+int dequeue(QUEUE* q);
+//void display(QUEUE* q);
+int isEmpty(QUEUE* q);
+void printQueue(QUEUE* q);
+
+
+// Structure for the adjacency list of a node
+typedef struct node {
+  int vertex;
+  struct node* next;
+} NODE;
+
+
+// Graph structure consisting of array of pointers for
+// adjacency lists, a mark or flag for each node and 
+// the total number of vertices.
+typedef struct Graph {
+  int nVertices;
+  int* visited;
+  NODE ** adjLists;
+} GRAPH;
+
+NODE* createNode(int);                  // Creates a node
+GRAPH* createGraph(int);                // Creates a graph
+
+void insertEdge(GRAPH*, int, int);      // Inserts edges 
+void deleteFromAlist(GRAPH*, int, int); // Delete from adjacency list 
+void deleteEdge(GRAPH*, int, int);      // Delete an edge of graph 
+void printGraph(GRAPH*);                // Prints graph
+void DFS(GRAPH*, int);                  // DFS of graph
+void BFS(GRAPH*, int);                  // BFS of graph
+
+int main() {
+  GRAPH* graph = createGraph(6);
+  int comp = 0;
+  int i;
+
+  insertEdge(graph, 0, 1);
+  insertEdge(graph, 0, 2);
+  insertEdge(graph, 1, 2);
+  insertEdge(graph, 2, 5);
+  insertEdge(graph, 3, 4);
+  insertEdge(graph, 1, 5);
+
+  printf("After insertion of edges: ");
+  printGraph(graph);
+
+  for (i = 0; i < 6; i++) {
+      if (graph->visited[i] == 0) {
+          comp++; // New connected component
+          printf("Component No: %d\n", comp);
+          DFS(graph, i);
+      }
+  }
+  printf("\nBegin BFS\n");
+  
+  // Unmark all marked vertices for performing BFS
+
+  for (i = 0; i < 6; i++)
+      graph->visited[i] = 0;
+  comp = 0;
+  for (i = 0; i < 6; i++) {
+      if (graph->visited[i] == 0) {
+          comp++; // New connected component
+          printf("\nComponent No: %d\n", comp);
+          BFS(graph, i);
+      }
+  }
+  return 0;
+}
+
+
+// Create a node
+NODE* createNode(int v) {
+  struct node* newNode = malloc(sizeof(NODE));
+  newNode->vertex = v;
+  newNode->next = NULL;
+  return newNode;
+}
+
+// Create graph
+GRAPH* createGraph(int vertices) {
+  int i;
+  GRAPH* graph = malloc(sizeof(GRAPH));
+  if (graph == NULL) {
+      printf("Memory allocation error\n");
+      return NULL;
+  }
+  else { 
+      graph->adjLists = malloc(vertices * sizeof(NODE*));
+      if (graph->adjLists == NULL) {
+           printf("Memory allocation error\n");
+           return NULL;
+      }
+      else { 
+           graph->visited = malloc(vertices * sizeof(int));
+           if (graph->visited == NULL) {
+              printf("Memory allocation error\n");
+              return NULL;
+           }
+      }
+  }
+  graph->nVertices = vertices;
+  for (i = 0; i < vertices; i++) {
+    graph->adjLists[i] = NULL;
+    graph->visited[i] = 0;
+  }
+  return graph;
+}
+
+void insertEdge(GRAPH* graph, int src, int dest) {
+   
+  // Add edge from src to dest
+  NODE* newNode = createNode(dest);
+  newNode->next = graph->adjLists[src];
+  graph->adjLists[src] = newNode;
+
+  // Add edge from dest to src
+  newNode = createNode(src);
+  newNode->next = graph->adjLists[dest];
+  graph->adjLists[dest] = newNode;
+}
+
+// Delete node dest from adjaceny list of src 
+void deleteFromAlist(GRAPH* graph, int src, int dest) {
+    NODE * ptr = graph->adjLists[src];
+    if (ptr == NULL) {
+        printf(" Edge %d->%d does not exist\n",src,dest);
+        return;
+    }
+    if (ptr->vertex == dest) {
+        graph->adjLists[src] = ptr->next;
+        return;
+    }
+    NODE * prev = ptr;
+    ptr = ptr->next;
+    while (ptr->vertex != dest && ptr->next != NULL) {
+       prev = ptr; 
+       ptr = ptr->next;
+    }
+    if (ptr->vertex == dest) { 
+       // printf(" deleting edge %d->%d\n",src, ptr->vertex);
+        prev->next = ptr->next;
+    }
+    else
+        printf(" Edge %d->%d does not exist\n",src,dest);
+    return;
+}
+
+// Delete src and dest from each other's adjacency
+void deleteEdge(GRAPH * graph, int src, int dest) {
+    // printf(" deleting edge (%d, %d)\n",src, dest);
+     deleteFromAlist(graph, src, dest);
+     deleteFromAlist(graph, dest, src);
+}
+
+// Print the graph
+void printGraph(GRAPH* graph) {
+  int v;
+  for (v = 0; v < graph->nVertices; v++) {
+    NODE* p = graph->adjLists[v];
+    printf("AdjList[%d]: ", v);
+
+    if (p == NULL) 
+        printf("\u03A6\n");
+    else {
+        while (p!= NULL) {
+          if (p->next == NULL)  
+              printf("%d \n", p->vertex); // Last vertex in list
+          else
+              printf("%d -> ", p->vertex); // Intermediate vertices 
+          p = p->next;
+        }
+     }
+  }
+  printf("\n");
+}
+
+void DFS(GRAPH* graph, int vertex) {
+  NODE* adjList = graph->adjLists[vertex];
+  NODE* p = adjList;
+  int currVtx; 
+  graph->visited[vertex] = 1;
+  printf("Visited %d \n", vertex);
+
+  while (p != NULL) {
+    currVtx = p->vertex;
+    printf("current vertex: %d\n",currVtx);
+    if (graph->visited[currVtx] == 0) 
+        DFS(graph, currVtx);
+    p = p->next;
+  }
+}
+
+// Create a queue
+QUEUE* createQueue() {
+  QUEUE* q = malloc(sizeof(QUEUE));
+  q->front = -1;
+  q->rear = -1;
+  return q;
+}
+
+// Check if the queue is empty
+int isEmpty(QUEUE* q) {
+  if (q->rear == -1)
+    return 1;
+  else
+    return 0;
+}
+
+// Adding elements into queue
+void enqueue(QUEUE* q, int value) {
+  if (q->rear == SIZE - 1)
+    printf("\nQueue is Full!!");
+  else {
+    if (q->front == -1)
+      q->front = 0;
+    q->rear++;
+    q->items[q->rear] = value;
+  }
+}
+
+// Removing elements from queue
+int dequeue(QUEUE* q) {
+  int item;
+  if (isEmpty(q)) {
+    printf("Queue is empty");
+    item = -1;
+  } else {
+    item = q->items[q->front];
+    q->front++;
+    if (q->front > q->rear) {
+      printf("Reinitialize queue\n");
+      q->front = q->rear = -1;
+    }
+  }
+  return item;
+}
+
+// Print the queue
+void printQueue(QUEUE* q) {
+
+  if (isEmpty(q)) {
+    printf("Queue is empty\n");
+  } else {
+    printf("\nQueue: ");
+    for (int i = q->front; i < q->rear + 1; i++) {
+      printf("%d ", q->items[i]);
+    }
+  }
+  printf("\n");
+}
+
+
+// BFS algorithm
+void BFS(GRAPH* graph, int startVtx) {
+  QUEUE* q = createQueue();
+
+  graph->visited[startVtx] = 1;
+  enqueue(q, startVtx);
+
+  while (!isEmpty(q)) {
+    printQueue(q);
+    int currVtx = dequeue(q);
+    printf("Visited %d\n", currVtx);
+
+    NODE* p = graph->adjLists[currVtx];
+
+    while (p) {
+      int adjVtx = p->vertex;
+
+      if (graph->visited[adjVtx] == 0) {
+        graph->visited[adjVtx] = 1;
+        enqueue(q, adjVtx);
+      }
+      p = p->next;
+    }
+  }
+}
+
+
+__________________________________________________________________________________________
+// Huffman Coding in C
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAXHEIGHT 50
+
+typedef struct node {
+  char symbol;
+  int freq;
+  struct node *left, *right;
+} HNODE;   // Define structure for a tree node
+
+typedef struct minHeap {
+  int size;
+  int capacity;
+  HNODE **array;
+} MHEAP;   // Define heap (tree) of nodes for storing codes
+
+// Functions to be used
+
+HNODE *newNode(char, int); // Creates a new tree node
+HNODE *deleteMin(MHEAP *); // Deletes minimum and restores heap order 
+MHEAP *createHeap(int); // Creates a heap of given capacity 
+MHEAP *createAndBuildHeap(char[], int[], int); // Create and builds heap 
+HNODE *buildHuffmanTree(char[], int[], int); // Builds Huffman tree 
+
+void heapify(MHEAP *, int); // Restores heap after insertion and deletion
+void insertHeap(MHEAP *, HNODE *); // Inserts into heap 
+void buildHeap(MHEAP *); // Builds the heap 
+void HuffmanCodes(char[], int[], int); // Creating Huffman codes 
+
+void swapHNODE(HNODE **, HNODE **); // Swap for heapify operation 
+int checkSizeOne(MHEAP *);  // Checks for heap of size=1 
+
+// Main driver program
+int main() {
+  char arr[] = {'A', 'B', 'C', 'D', 'E', 'F'};
+  int freq[] = {5, 1, 6, 3, 10, 9};
+
+  int size = sizeof(arr) / sizeof(arr[0]);
+
+  printf("\n--------------------\n");
+  printf(" Symbols | Huffman code ");
+  printf("\n--------------------\n");
+
+  HuffmanCodes(arr, freq, size);
+  printf("--------------------\n");
+}
+
+
+// Create a new node for insertion
+HNODE *newNode(char symbol, int freq) {
+  HNODE *p = (HNODE *)malloc(sizeof(HNODE));
+
+  if (p == NULL) {
+      printf("Failure: memory allocation\n"); 
+      return NULL;
+  }
+  p->left = p->right = NULL;
+  p->symbol = symbol;
+  p->freq = freq;
+
+  return p;
+}
+
+// Create min heap storage of given capacity
+MHEAP *createHeap(int capacity) {
+  MHEAP *h = (MHEAP *)malloc(sizeof(MHEAP));
+
+  h->size = 0;
+
+  h->capacity = capacity;
+
+  h->array = (HNODE **) malloc(h->capacity * sizeof(HNODE *));
+  return h;
+}
+
+// Swap the heap nodes for heapify operation 
+void swapHNODE(HNODE **a, HNODE **b) {
+  HNODE *t = *a;
+  *a = *b;
+  *b = t;
+}
+
+// Heapify operation used after deletion and insertion
+void heapify(MHEAP *h, int idx) {
+  int smallest = idx;
+  int left = 2 * idx + 1;
+  int right = 2 * idx + 2;
+
+  if (left < h->size && h->array[left]->freq < h->array[smallest]->freq)
+    smallest = left;
+
+  if (right < h->size && h->array[right]->freq < h->array[smallest]->freq)
+    smallest = right;
+
+  if (smallest != idx) {
+    swapHNODE(&h->array[smallest], &h->array[idx]);
+    heapify(h, smallest);
+  }
+}
+
+// Check if size if 1
+int checkSizeOne(MHEAP *h) {
+  return (h->size == 1);
+}
+
+// Extract min
+HNODE *deleteMin(MHEAP *h) {
+  HNODE *p = h->array[0];
+  h->array[0] = h->array[h->size - 1];
+
+  --h->size;
+  heapify(h, 0);
+
+  return p;
+}
+
+// Insertion function
+void insertHeap(MHEAP *h, HNODE *hNode) {
+  ++h->size;
+  int i = h->size - 1;
+
+  while (i && hNode->freq < h->array[(i - 1) / 2]->freq) {
+    h->array[i] = h->array[(i - 1) / 2];
+    i = (i - 1) / 2;
+  }
+  h->array[i] = hNode;
+}
+
+void buildHeap(MHEAP *h) {
+  int n = h->size - 1;
+  int i;
+
+  for (i = (n - 1) / 2; i >= 0; --i)
+    heapify(h, i);
+}
+
+int isLeaf(HNODE *root) {
+  return !(root->left) && !(root->right);
+}
+
+MHEAP *createAndBuildHeap(char symbol[], int freq[], int size) {
+  MHEAP *h = createHeap(size);
+
+  for (int i = 0; i < size; ++i)
+    h->array[i] = newNode(symbol[i], freq[i]);
+
+  h->size = size;
+  buildHeap(h);
+
+  return h;
+}
+
+HNODE *buildHuffmanTree(char symbol[], int freq[], int size) {
+  HNODE *left, *right, *top;
+  MHEAP *h = createAndBuildHeap(symbol, freq, size);
+
+  while (!checkSizeOne(h)) {
+    left = deleteMin(h);
+    right = deleteMin(h);
+
+    top = newNode('$', left->freq + right->freq);
+
+    top->left = left;
+    top->right = right;
+
+    insertHeap(h, top);
+  }
+  return deleteMin(h);
+}
+
+// Print the array
+void printArray(int arr[], int n) {
+  int i;
+  for (i = 0; i < n; ++i)
+    printf("%d", arr[i]);
+
+  printf("\n");
+}
+
+// Print the codes
+void printHCodes(HNODE *root, int arr[], int top) {
+  if (root->left) {
+    arr[top] = 0;
+    printHCodes(root->left, arr, top + 1);
+  }
+  if (root->right) {
+    arr[top] = 1;
+    printHCodes(root->right, arr, top + 1);
+  }
+  if (isLeaf(root)) {
+    printf("    %c    |  ", root->symbol);
+    printArray(arr, top);
+  }
+}
+
+// Wrapper function
+void HuffmanCodes(char symbol[], int freq[], int size) {
+  int arr[MAXHEIGHT], top = 0;
+  HNODE *root = buildHuffmanTree(symbol, freq, size);
+
+  printHCodes(root, arr, top);
+}
+
+
+__________________________________________________________________________________________#include <stdio.h>
+#include <stdlib.h>
+ 
+// Structure of a linked list node
+struct node {
+    int info;
+    struct node* next;
+};
+ 
+struct node* last = NULL; // Pointer to last node
+ 
+void prependList(int data) {
+    // Initialize a new node
+    struct node* p;
+    p = (struct node*)malloc(sizeof(struct node));
+ 
+    // If the new node will be first node 
+    if (last == NULL) {
+        p->info = data;
+        p->next = p;
+        last = p;
+    }
+ 
+    // last->next is the first node in the list 
+    else {
+        p->info = data;
+        // Set first node as successor of new node
+        p->next = last->next; 
+ 
+        // The new node becomes the first node 
+        last->next = p;  
+    }
+}
+ 
+// Function to print the list
+void printList() {
+    struct node* p;
+
+    printf("[ ");
+    if (last == NULL)
+        printf("]\n");
+ 
+    else {
+        p = last->next; // Go to first node
+ 
+        do {
+            printf(" %d ", p->info);
+            p = p->next;
+        } while (p != last->next);
+    }
+    printf("]\n");
+}
+
+void appendList(int data) {
+    struct node* p;
+    p = (struct node*)malloc(sizeof(struct node));
+ 
+    if (last == NULL) {
+        // Append to empty list
+        p->info = data;
+        p->next = p;
+        last = p;
+    } else {
+        // Append to nonempty list
+        p->info = data;
+        p->next = last->next; // Insert after the last  
+        last->next = p;       // Set the next of last
+        last = p;             // Set p as the last 
+    }
+} 
+
+void deleteFirst() {
+    struct node* p;
+    
+    if (last == NULL) {
+        printf("Error: attempt to delete from empty list!\n");
+    } else {
+        p = last->next; // Go to the first node
+        printf("Deleted %d\n",p->info);
+        last->next = p->next; // Detach the first node
+    }
+    return;
+}
+
+void deleteItem(int data) {
+    struct node *p;
+    struct node *q;
+
+    if (last == NULL) {
+        printf("Error: empty list!\n");
+        return;
+    }
+   
+    // Only one item in list 
+    if (last == last->next && last->info == data) {
+        printf("Deleted: %d\n",last->info);
+        last = NULL; // Make list empty
+        return;
+    }
+    p = last; 
+    q = p->next;
+    if (p->info == data) {
+        while (q->next != last)
+            q = q->next;   // Find previous item
+        q->next = p->next; // Delete current item
+        last = q;          // Set last to previous
+        printf("Deleted: %d\n",p->info);
+        return;
+    }
+    while (p->info != data) {
+        q = p;       // Set previous 
+        p = p->next; // Go to next 
+        if (p == last) { 
+           printf("Error: item %d not present in list\n",data);
+           return;   // Reached last: item not found 
+        } 
+        if (p->info == data) {
+             q->next = p->next; // Delete current item
+             printf("Deleted: %d\n",p->info);
+             return;
+        }
+    } 
+}
+
+
+int main() {
+    
+    prependList(10);
+    prependList(20);
+    prependList(30);
+ 
+    printf("After prepend\n");
+    printList();   // Display the list
+
+    appendList(40);
+    appendList(50);
+    appendList(60);
+    printf("After append\n");
+    printList(); // Display the list
+    deleteFirst();
+    printList(); // Display the list
+    deleteItem(60);
+    printList(); // Display the list
+}
+__________________________________________________________________________________________#include <iostream>    
+#include <algorithm>    
+using namespace std;    
+const int MAX = 1e4 + 5;    
+int id[MAX], nodes, edges;    
+pair <long long, pair<int, int> > p[MAX];    
+void init()    
+{    
+    for(int i = 0;i < MAX;++i)    
+        id[i] = i;    
+}      
+int root(int x)    
+{    
+    while(id[x] != x)    
+    {    
+        id[x] = id[id[x]];    
+        x = id[x];    
+    }    
+    return x;    
+}      
+void union1(int x, int y)    
+{    
+    int p = root(x);    
+    int q = root(y);    
+    id[p] = id[q];    
+}     
+long long kruskal(pair<long long, pair<int, int> > p[])    
+{    
+    int x, y;    
+    long long cost, minimumCost = 0;    
+    for(int i = 0;i < edges;++i)    
+    {    
+        x = p[i].second.first;    
+        y = p[i].second.second;    
+        cost = p[i].first;    
+        if(root(x) != root(y))    
+        {    
+            minimumCost += cost;    
+            union1(x, y);    
+        }        
+    }    
+    return minimumCost;    
+}     
+int main()    
+{    
+    int x, y;    
+    long long weight, cost, minimumCost;    
+    init();    
+    cout <<"Enter Nodes and edges";    
+    cin >> nodes >> edges;    
+    for(int i = 0;i < edges;++i)    
+    {    
+        cout<<"Enter the value of X, Y and edges";    
+    cin >> x >> y >> weight;    
+        p[i] = make_pair(weight, make_pair(x, y));    
+    }    
+    sort(p, p + edges);    
+    minimumCost = kruskal(p);    
+    cout <<"Minimum cost is "<< minimumCost << endl;    
+    return 0;    
+}     __________________________________________________________________________________________#include <stdio.h>
+#include <stdlib.h>
+struct Node {
+    int info;
+    struct Node * prev;
+    struct Node * next;
+};
+
+struct Node * createNewNode() {
+    struct Node * p;
+    p = (struct Node *) malloc(sizeof(struct Node *));
+    if (p == NULL) {
+        printf("Error: creation failed\n");
+        return NULL;
+    } 
+    //printf("created new node\n");
+    p->next = NULL; 
+    p->prev = NULL;
+    return p;
+}
+
+struct Node * makeNull(struct Node *list){
+    return NULL;
+}
+
+struct Node * searchList(struct Node * list, int data) {
+    struct Node * p = list; 
+    while (p != NULL) {
+        if (p->info == data)
+            return p;
+        else
+            p = p->next;
+    }
+    return NULL;
+}
+
+struct Node * insertBeforeDLL(struct Node * list, int x, int data) { 
+    struct Node *p;
+    struct Node *q = createNewNode();
+    if (q == NULL) {
+        return list;
+    }
+
+    p = searchList(list, data);
+    if (p == NULL) {
+        printf("Error: %d not present\n", data);
+        return list; 
+    }
+
+    q->info = x;
+    //if (p != NULL) {
+        if (p->prev == NULL) {
+            printf("Inserting as the first node\n");
+            q->prev = p->prev;
+            q->next = p;
+            p->prev = q;
+            list = q;
+        } else {
+            q->prev = p->prev;
+            q->next = p; 
+            p->prev->next = q;
+            p->prev = q;
+        //}
+        return list;
+    }
+}
+
+struct Node * insertAfterDLL(struct Node * list, int x, int data) { 
+    struct Node *p;
+    struct Node *temp;
+    struct Node *q = createNewNode();
+
+    if (q == NULL) {
+        printf("Error: cannot create \n");
+        return list;
+    }
+    else 
+        q->info = x;
+    p = searchList(list, data);
+    if (p != NULL) {
+        if (p->next == NULL) {
+            printf("insert after last\n");
+            q->next = p->next;
+            q->prev = p;
+            p->next = q;
+        } else {
+            printf("insert after %d\n",p->info);
+            q->next = p->next;
+            p->next->prev = q;
+            q->prev = p;
+            p->next = q;
+        }
+    }
+    return list;
+}
+
+struct Node * appendDLL(struct Node * list, int data) { 
+    struct Node *p = createNewNode();
+    p->info = data;
+    printf("to insert %d \n",p->info);
+     
+    if (list == NULL) {
+        printf("Appending to empty list\n");
+        return p;
+    }
+    p->next = list;
+    list->prev = p;
+    return p;
+} 
+
+struct Node * prependDLL(struct Node * list, int data) { 
+    struct Node *p = createNewNode();
+    p->info = data;
+    printf("to prepend %d \n",p->info);
+     
+    if (list == NULL) {
+        printf("Prepending to empty list\n");
+        return p;
+    }
+    // Prepend to nonempty list
+    p->prev = list->prev; // p->prev = NULL
+    list->prev = p;
+    p->next = list; // p->next = list
+    return p; 
+} 
+
+struct Node * removeDLL(struct Node * list, int data) { 
+    struct Node *p;
+    //struct Node *q;
+    p = searchList(list, data);
+    if (p == NULL) {
+        printf("Error: %d not present\n",data);
+        return list;
+    }
+    if (p->next == NULL && p->prev == NULL) {
+       printf("Deleting only node in the list %d\n",p->info);
+       return NULL;
+    } 
+    if (p->next == NULL) {
+       printf("Deleting last node %d\n",p->info);
+       p->prev->next = NULL;
+       return list;
+    } 
+    if (p->prev == NULL) {
+       printf("Deleting first node %d\n",p->info);
+       list = list->next;
+       list->prev = NULL;
+       return list;
+    } 
+    printf("Deleting %d\n",p->info);
+    p->prev->next = p->next;
+    p->next->prev = p->prev;
+    return list;
+}
+
+void printListDLL(struct Node *list){
+    struct Node *p = list;
+    if (p == NULL) {
+        printf("List is empty\n");
+        return;
+    }
+    printf("List is: [ ");
+    while (p != NULL) {
+        printf("%d ",p->info);
+        p = p->next;
+    }
+    printf("]\n");
+}
+
+void main() {
+    struct Node *head = NULL;
+    head = appendDLL(head,10);
+    printListDLL(head);
+    head = insertAfterDLL(head,20,10);
+    printListDLL(head);
+    head = appendDLL(head,30);
+    printListDLL(head);
+    head = insertAfterDLL(head,50,10);
+    printListDLL(head);
+    head = removeDLL(head,50);
+    printListDLL(head);
+    head = removeDLL(head,20);
+    printListDLL(head);
+    head = insertBeforeDLL(head,20,10);
+    head = insertBeforeDLL(head,50,20);
+    head = insertBeforeDLL(head,60,70);
+    printListDLL(head);
+    head = removeDLL(head,50);
+    printListDLL(head);
+    head = makeNull(head);
+    head = prependDLL(head,70);
+    printListDLL(head);
+    head = insertAfterDLL(head,60,70);
+    printListDLL(head);
+}
+__________________________________________________________________________________________
+// C++ Program for Floyd Warshall Algorithm
+#include <bits/stdc++.h>
+using namespace std;
+
+// Number of vertices in the graph
+#define V 4
+
+/* Define Infinite as a large enough
+value.This value will be used for
+vertices not connected to each other */
+#define INF 99999
+
+// A function to print the solution matrix
+void printSolution(int dist[][V]);
+
+// Solves the all-pairs shortest path
+// problem using Floyd Warshall algorithm
+void floydWarshall(int graph[][V])
+{
+	/* dist[][] will be the output matrix
+	that will finally have the shortest
+	distances between every pair of vertices */
+	int dist[V][V], i, j, k;
+
+	/* Initialize the solution matrix same
+	as input graph matrix. Or we can say
+	the initial values of shortest distances
+	are based on shortest paths considering
+	no intermediate vertex. */
+	for (i = 0; i < V; i++)
+		for (j = 0; j < V; j++)
+			dist[i][j] = graph[i][j];
+
+	/* Add all vertices one by one to
+	the set of intermediate vertices.
+	---> Before start of an iteration,
+	we have shortest distances between all
+	pairs of vertices such that the
+	shortest distances consider only the
+	vertices in set {0, 1, 2, .. k-1} as
+	intermediate vertices.
+	----> After the end of an iteration,
+	vertex no. k is added to the set of
+	intermediate vertices and the set becomes {0, 1, 2, ..
+	k} */
+	for (k = 0; k < V; k++) {
+		// Pick all vertices as source one by one
+		for (i = 0; i < V; i++) {
+			// Pick all vertices as destination for the
+			// above picked source
+			for (j = 0; j < V; j++) {
+				// If vertex k is on the shortest path from
+				// i to j, then update the value of
+				// dist[i][j]
+				if (dist[i][j] > (dist[i][k] + dist[k][j])
+					&& (dist[k][j] != INF
+						&& dist[i][k] != INF))
+					dist[i][j] = dist[i][k] + dist[k][j];
+			}
+		}
+	}
+
+	// Print the shortest distance matrix
+	printSolution(dist);
+}
+
+/* A utility function to print solution */
+void printSolution(int dist[][V])
+{
+	cout << "The following matrix shows the shortest "
+			"distances"
+			" between every pair of vertices \n";
+	for (int i = 0; i < V; i++) {
+		for (int j = 0; j < V; j++) {
+			if (dist[i][j] == INF)
+				cout << "INF"
+					<< "	 ";
+			else
+				cout << dist[i][j] << "	 ";
+		}
+		cout << endl;
+	}
+}
+
+// Driver code
+int main()
+{
+	/* Let us create the following weighted graph
+			10
+	(0)------->(3)
+		|	 /|\
+	5 |	 |
+		|	 | 1
+	\|/	 |
+	(1)------->(2)
+			3	 */
+	int graph[V][V] = { { 0, 5, INF, 10 },
+						{ INF, 0, 3, INF },
+						{ INF, INF, 0, 1 },
+						{ INF, INF, INF, 0 } };
+
+	// Print the solution
+	floydWarshall(graph);
+	return 0;
+}
+
+// This code is contributed by Mythri J L
+__________________________________________________________________________________________
+// C program for insertion sort
+#include <math.h>
+#include <stdio.h>
+
+/* Function to sort an array using insertion sort*/
+void insertionSort(int arr[], int n)
+{
+	int i, key, j;
+	for (i = 1; i < n; i++) {
+		key = arr[i];
+		j = i - 1;
+
+		/* Move elements of arr[0..i-1], that are
+		greater than key, to one position ahead
+		of their current position */
+		while (j >= 0 && arr[j] > key) {
+			arr[j + 1] = arr[j];
+			j = j - 1;
+		}
+		arr[j + 1] = key;
+	}
+}
+
+// A utility function to print an array of size n
+void printArray(int arr[], int n)
+{
+	int i;
+	for (i = 0; i < n; i++)
+		printf("%d ", arr[i]);
+	printf("\n");
+}
+
+/* Driver program to test insertion sort */
+int main()
+{
+	int arr[] = { 12, 11, 13, 5, 6 };
+	int n = sizeof(arr) / sizeof(arr[0]);
+
+	insertionSort(arr, n);
+	printArray(arr, n);
+
+	return 0;
+}
+__________________________________________________________________________________________// A Dynamic Programming based
+// solution for 0-1 Knapsack problem
+#include <stdio.h>
+
+// A utility function that returns
+// maximum of two integers
+int max(int a, int b)
+{
+	return (a > b) ? a : b;
+}
+
+// Returns the maximum value that
+// can be put in a knapsack of capacity W
+int knapSack(int W, int wt[], int val[], int n)
+{
+	int i, w;
+	int K[n + 1][W + 1];
+
+	// Build table K[][] in bottom up manner
+	for (i = 0; i <= n; i++)
+	{
+		for (w = 0; w <= W; w++)
+		{
+			if (i == 0 || w == 0)
+				K[i][w] = 0;
+			else if (wt[i - 1] <= w)
+				K[i][w] = max(val[i - 1]
+						+ K[i - 1][w - wt[i - 1]],
+						K[i - 1][w]);
+			else
+				K[i][w] = K[i - 1][w];
+		}
+	}
+
+	return K[n][W];
+}
+
+// Driver Code
+int main()
+{
+	int val[] = { 60, 100, 120 };
+	int wt[] = { 10, 20, 30 };
+	int W = 50;
+	int n = sizeof(val) / sizeof(val[0]);
+	printf("%d", knapSack(W, wt, val, n));
+	return 0;
+}
+__________________________________________________________________________________________/* Dynamic Programming C implementation of LCS problem */
+#include<bits/stdc++.h>
+
+int max(int a, int b);
+
+/* Returns length of LCS for X[0..m-1], Y[0..n-1] */
+int lcs( char *X, char *Y, int m, int n )
+{
+int L[m+1][n+1];
+int i, j;
+
+/* Following steps build L[m+1][n+1] in bottom up fashion. Note
+	that L[i][j] contains length of LCS of X[0..i-1] and Y[0..j-1] */
+for (i=0; i<=m; i++)
+{
+	for (j=0; j<=n; j++)
+	{
+	if (i == 0 || j == 0)
+		L[i][j] = 0;
+
+	else if (X[i-1] == Y[j-1])
+		L[i][j] = L[i-1][j-1] + 1;
+
+	else
+		L[i][j] = max(L[i-1][j], L[i][j-1]);
+	}
+}
+	
+/* L[m][n] contains length of LCS for X[0..n-1] and Y[0..m-1] */
+return L[m][n];
+}
+
+/* Utility function to get max of 2 integers */
+int max(int a, int b)
+{
+	return (a > b)? a : b;
+}
+
+/* Driver program to test above function */
+int main()
+{
+char X[] = "AGGTAB";
+char Y[] = "GXTXAYB";
+
+int m = strlen(X);
+int n = strlen(Y);
+
+printf("Length of LCS is %d", lcs( X, Y, m, n ) );
+
+return 0;
+}
+__________________________________________________________________________________________
+// C/C++ program to solve fractional Knapsack Problem
+#include <bits/stdc++.h>
+
+using namespace std;
+
+// Structure for an item which stores weight and
+// corresponding value of Item
+struct Item {
+	int value, weight;
+
+	// Constructor
+	Item(int value, int weight)
+	{
+	this->value=value;
+	this->weight=weight;
+	}
+};
+
+// Comparison function to sort Item according to val/weight
+// ratio
+bool cmp(struct Item a, struct Item b)
+{
+	double r1 = (double)a.value / (double)a.weight;
+	double r2 = (double)b.value / (double)b.weight;
+	return r1 > r2;
+}
+
+// Main greedy function to solve problem
+double fractionalKnapsack(int W, struct Item arr[], int n)
+{
+	// sorting Item on basis of ratio
+	sort(arr, arr + n, cmp);
+
+	// Uncomment to see new order of Items with their
+	// ratio
+	/*
+	for (int i = 0; i < n; i++)
+	{
+		cout << arr[i].value << " " << arr[i].weight << " :
+	"
+			<< ((double)arr[i].value / arr[i].weight) <<
+	endl;
+	}
+	*/
+
+	int curWeight = 0; // Current weight in knapsack
+	double finalvalue = 0.0; // Result (value in Knapsack)
+
+	// Looping through all Items
+	for (int i = 0; i < n; i++) {
+		// If adding Item won't overflow, add it completely
+		if (curWeight + arr[i].weight <= W) {
+			curWeight += arr[i].weight;
+			finalvalue += arr[i].value;
+		}
+
+		// If we can't add current Item, add fractional part
+		// of it
+		else {
+			int remain = W - curWeight;
+			finalvalue += arr[i].value
+						* ((double)remain
+							/ (double)arr[i].weight);
+			break;
+		}
+	}
+
+	// Returning final value
+	return finalvalue;
+}
+
+// Driver code
+int main()
+{
+	int W = 50; // Weight of knapsack
+	Item arr[] = { { 60, 10 }, { 100, 20 }, { 120, 30 } };
+
+	int n = sizeof(arr) / sizeof(arr[0]);
+
+	// Function call
+	cout << "Maximum value we can obtain = "
+		<< fractionalKnapsack(W, arr, n);
+	return 0;
+}
+__________________________________________________________________________________________/*
+* This C++ program can multiply any two square or rectangular matrices.
+* The below program multiplies two square matrices of size 4 * 4.
+* There is also an example of a rectangular matrix for the same code (commented below).
+* We can change the Matrix value with the number of rows and columns (from MACROs) for Matrix-1
+* and Matrix-2 for different dimensions.
+*/
+
+/*
+* Note: i- The number of columns in Matrix-1 must be equal to the number of rows in Matrix-2.
+*	 ii- Output of multiplicationof Matrix-1 and Matrix-2, results with equalto the number
+*		 of rows of Matrix-1 and thenumber of columns of Matrix-2 i.e. rslt[R1][C2].
+*/
+
+#include <iostream>
+
+using namespace std;
+
+// Edit MACROs here, according to your Matrix Dimensions for mat1[R1][C1] and mat2[R2][C2]
+#define R1 4		 // number of rows in Matrix-1
+#define C1 4		 // number of columns in Matrix-1
+#define R2 4		 // number of rows in Matrix-2
+#define C2 4		 // number of columns in Matrix-2
+
+void mulMat(int mat1[][C1], int mat2[][C2]) {
+	int rslt[R1][C2];
+
+	cout << "Multiplication of given two matrices is:\n" << endl;
+
+	for (int i = 0; i < R1; i++) {
+		for (int j = 0; j < C2; j++) {
+			rslt[i][j] = 0;
+
+			for (int k = 0; k < R2; k++) {
+				rslt[i][j] += mat1[i][k] * mat2[k][j];
+			}
+
+			cout << rslt[i][j] << "\t";
+		}
+
+		cout << endl;
+	}
+}
+
+int main(void) {
+	// Square Matrices
+	// R1 = 4, C1 = 4 and R2 = 4, C2 = 4 (Update these values in MACROs)
+	int mat1[R1][C1] = {
+			{1, 1, 1, 1},
+			{2, 2, 2, 2},
+			{3, 3, 3, 3},
+			{4, 4, 4, 4}
+	};
+
+	int mat2[R2][C2] = {
+			{1, 1, 1, 1},
+			{2, 2, 2, 2},
+			{3, 3, 3, 3},
+			{4, 4, 4, 4}
+	};
+
+	/*
+	// Rectangular Matrices
+	// R1 = 3, C1 = 4 and R2 = 4, C2 = 3 (Update these values in MACROs)
+	int mat1[R1][C1] = {
+				{1, 1, 1, 1},
+				{2, 2, 2, 2},
+				{3, 3, 3, 3}
+	};
+
+	int mat2[R2][C2] = {
+				{1, 1, 1},
+				{2, 2, 2},
+				{3, 3, 3},
+				{4, 4, 4}
+	};
+	*/
+
+	if (C1 != R2) {
+		cout << "The number of columns in Matrix-1 must be equal to the number of rows in "
+				"Matrix-2" << endl;
+		cout << "Please update MACROs according to your array dimension in #define section"
+				<< endl;
+
+		exit(EXIT_FAILURE);
+	}
+
+	mulMat(mat1, mat2);
+
+	return 0;
+}
+
+// This code is contributed by Manish Kumar (mkumar2789)
+__________________________________________________________________________________________
+#include <stdio.h>
+#include <stdlib.h>
+struct node {
+    int info;
+    struct node *next;
+};
+
+int isEmpty(struct node *list){
+    return (list == NULL);
+}
+
+struct node *searchList(struct node *list, int n) {
+   struct node *p = list;
+   while (p != NULL) {
+       if (p->info == n)
+          return p; // n belongs to list
+       p = p->next;
+   }
+   return p; // Either NULL or ptr to n
+}
+
+struct node *endList(struct node *list) {
+   struct node *p = list;
+   if (p == NULL) 
+	   return NULL;
+   while (p->next != NULL) 
+       p = p->next;
+   return p;
+}
+
+void printList(struct node *list){
+    while (!isEmpty(list)) {
+        printf(" %d ", list->info);
+        list = list->next;
+    }
+    printf("\n");
+}
+
+struct node *prependToList(struct node *list, int n) {
+   struct node *newNode;
+  
+   if (searchList(list, n) != NULL) {
+       printf("%d exists, prepend not allowed \n", n); 
+       return list;
+   }
+   else {
+       newNode = malloc(sizeof(struct node));
+       if (newNode == NULL) {
+           printf("Creation of node failed\n"); 
+           return list; // List is unchanged.
+       }
+       else {
+           // Creation is successful
+           newNode->info = n;
+           newNode->next = list;
+        }
+   } 
+   return newNode;
+}
+
+struct node *appendToList(struct node *list, int n) {
+    struct node *newNode, *p;
+    if (searchList(list, n)	!= NULL) {
+       printf("%d exists in the list, append not allowed\n", n);
+       return list; // List unchanged
+    }
+	else {  
+        // Creation successful
+	    newNode = malloc(sizeof(struct node));
+	    newNode->info = n;
+	    newNode->next = NULL;
+	    p = endList(list); // get pointer to end of the list
+	    if (p == NULL)  {
+	    	list = newNode; // Append to empty list 
+            return list;    // Return pointer to it
+        } else {
+	    	p->next = newNode; // Append to nonempty list
+	        return list;       // newNode is last node
+        }
+    } 
+}
+
+struct node *removeFromList(struct node *list, int n) {
+   struct node *q = list, *p = list;
+
+   if (p->info == n) {
+       printf("%d is deleted from list\n", p->info);
+	   return list->next; // n is the first element
+   } 
+   p = p->next; // q is not changed so it is previous
+   while (p != NULL) {
+      if (p->info == n) {
+          printf("%d is deleted from list\n", p->info);
+          q->next = p->next; // Remove node 
+		  return list;
+	  }
+      q = p;       // previous is current 
+      p = p->next; // current to next
+   } 
+   // While exists with p == NULL 
+   //if (p == NULL) 
+   printf("%d does not exist, deletion not possible\n", n);
+   return list;
+}
+
+int main() {
+   int i, n;
+   struct node *first = NULL;
+   for (i = 5; i > 0; i--) 
+       first = prependToList(first, i*10); // Prepend 5 nodes
+   printList(first); // Print list
+   for (i = 5; i < 10; i++)  
+       first = appendToList(first, (i+1)*10); // Append 5 more 
+   printList(first); // Print list
+   //first = appendToList(first, 50); // Append 
+   first = prependToList(first, 50); // Prepend 50
+   first = appendToList(first, 30);
+   printf("Enter number to be deleted: "); 
+   scanf("%d", &n);
+   first = removeFromList(first, n);
+   printList(first);
+}
+
+____________________________________________________________________________________________________________________________________________________________________________________// A C++ program for Dijkstra's single source shortest path algorithm.
+// The program is for adjacency matrix representation of the graph
+#include <iostream>
+using namespace std;
+#include <limits.h>
+
+// Number of vertices in the graph
+#define V 9
+
+// A utility function to find the vertex with minimum distance value, from
+// the set of vertices not yet included in shortest path tree
+int minDistance(int dist[], bool sptSet[])
+{
+
+	// Initialize min value
+	int min = INT_MAX, min_index;
+
+	for (int v = 0; v < V; v++)
+		if (sptSet[v] == false && dist[v] <= min)
+			min = dist[v], min_index = v;
+
+	return min_index;
+}
+
+// A utility function to print the constructed distance array
+void printSolution(int dist[])
+{
+	cout <<"Vertex \t Distance from Source" << endl;
+	for (int i = 0; i < V; i++)
+		cout << i << " \t\t"<<dist[i]<< endl;
+}
+
+// Function that implements Dijkstra's single source shortest path algorithm
+// for a graph represented using adjacency matrix representation
+void dijkstra(int graph[V][V], int src)
+{
+	int dist[V]; // The output array. dist[i] will hold the shortest
+	// distance from src to i
+
+	bool sptSet[V]; // sptSet[i] will be true if vertex i is included in shortest
+	// path tree or shortest distance from src to i is finalized
+
+	// Initialize all distances as INFINITE and stpSet[] as false
+	for (int i = 0; i < V; i++)
+		dist[i] = INT_MAX, sptSet[i] = false;
+
+	// Distance of source vertex from itself is always 0
+	dist[src] = 0;
+
+	// Find shortest path for all vertices
+	for (int count = 0; count < V - 1; count++) {
+		// Pick the minimum distance vertex from the set of vertices not
+		// yet processed. u is always equal to src in the first iteration.
+		int u = minDistance(dist, sptSet);
+
+		// Mark the picked vertex as processed
+		sptSet[u] = true;
+
+		// Update dist value of the adjacent vertices of the picked vertex.
+		for (int v = 0; v < V; v++)
+
+			// Update dist[v] only if is not in sptSet, there is an edge from
+			// u to v, and total weight of path from src to v through u is
+			// smaller than current value of dist[v]
+			if (!sptSet[v] && graph[u][v] && dist[u] != INT_MAX
+				&& dist[u] + graph[u][v] < dist[v])
+				dist[v] = dist[u] + graph[u][v];
+	}
+
+	// print the constructed distance array
+	printSolution(dist);
+}
+
+// driver program to test above function
+int main()
+{
+
+	/* Let us create the example graph discussed above */
+	int graph[V][V] = { { 0, 4, 0, 0, 0, 0, 0, 8, 0 },
+						{ 4, 0, 8, 0, 0, 0, 0, 11, 0 },
+						{ 0, 8, 0, 7, 0, 4, 0, 0, 2 },
+						{ 0, 0, 7, 0, 9, 14, 0, 0, 0 },
+						{ 0, 0, 0, 9, 0, 10, 0, 0, 0 },
+						{ 0, 0, 4, 14, 10, 0, 2, 0, 0 },
+						{ 0, 0, 0, 0, 0, 2, 0, 1, 6 },
+						{ 8, 11, 0, 0, 0, 0, 1, 0, 7 },
+						{ 0, 0, 2, 0, 0, 0, 6, 7, 0 } };
+
+	dijkstra(graph, 0);
+
+	return 0;
+}
+
+// This code is contributed by shivanisinghss2110
+__________________________________________________________________________________________// A Divide and Conquer based program for maximum subarray
+// sum problem
+#include <limits.h>
+#include <stdio.h>
+
+// A utility function to find maximum of two integers
+int max(int a, int b) { return (a > b) ? a : b; }
+
+// A utility function to find maximum of three integers
+int max(int a, int b, int c) { return max(max(a, b), c); }
+
+// Find the maximum possible sum in arr[] auch that arr[m]
+// is part of it
+int maxCrossingSum(int arr[], int l, int m, int h)
+{
+	// Include elements on left of mid.
+	int sum = 0;
+	int left_sum = INT_MIN;
+	for (int i = m; i >= l; i--) {
+		sum = sum + arr[i];
+		if (sum > left_sum)
+			left_sum = sum;
+	}
+
+	// Include elements on right of mid
+	sum = 0;
+	int right_sum = INT_MIN;
+	for (int i = m + 1; i <= h; i++) {
+		sum = sum + arr[i];
+		if (sum > right_sum)
+			right_sum = sum;
+	}
+
+	// Return sum of elements on left and right of mid
+	// returning only left_sum + right_sum will fail for
+	// [-2, 1]
+	return max(left_sum + right_sum, left_sum, right_sum);
+}
+
+// Returns sum of maximum sum subarray in aa[l..h]
+int maxSubArraySum(int arr[], int l, int h)
+{
+	// Base Case: Only one element
+	if (l == h)
+		return arr[l];
+
+	// Find middle point
+	int m = (l + h) / 2;
+
+	/* Return maximum of following three possible cases
+			a) Maximum subarray sum in left half
+			b) Maximum subarray sum in right half
+			c) Maximum subarray sum such that the subarray
+	crosses the midpoint */
+	return max(maxSubArraySum(arr, l, m),
+			maxSubArraySum(arr, m + 1, h),
+			maxCrossingSum(arr, l, m, h));
+}
+
+/*Driver program to test maxSubArraySum*/
+int main()
+{
+	int arr[] = { 2, 3, 4, 5, 7 };
+	int n = sizeof(arr) / sizeof(arr[0]);
+	int max_sum = maxSubArraySum(arr, 0, n - 1);
+	printf("Maximum contiguous sum is %d\n", max_sum);
+	getchar();
+	return 0;
+}
+__________________________________________________________________________________________/* A naive recursive implementation that simply
+follows the above optimal substructure property */
+#include <bits/stdc++.h>
+using namespace std;
+
+// Matrix Ai has dimension p[i-1] x p[i]
+// for i = 1..n
+int MatrixChainOrder(int p[], int i, int j)
+{
+	if (i == j)
+		return 0;
+	int k;
+	int min = INT_MAX;
+	int count;
+
+	// place parenthesis at different places
+	// between first and last matrix, recursively
+	// calculate count of multiplications for
+	// each parenthesis placement and return the
+	// minimum count
+	for (k = i; k < j; k++)
+	{
+		count = MatrixChainOrder(p, i, k)
+				+ MatrixChainOrder(p, k + 1, j)
+				+ p[i - 1] * p[k] * p[j];
+
+		if (count < min)
+			min = count;
+	}
+
+	// Return minimum count
+	return min;
+}
+
+// Driver Code
+int main()
+{
+	int arr[] = { 1, 2, 3, 4, 3 };
+	int n = sizeof(arr) / sizeof(arr[0]);
+
+	cout << "Minimum number of multiplications is "
+		<< MatrixChainOrder(arr, 1, n - 1);
+}
+
+// This code is contributed by Shivi_Aggarwal
+__________________________________________________________________________________________// C++ program for Merge Sort
+#include <iostream>
+using namespace std;
+
+// Merges two subarrays of array[].
+// First subarray is arr[begin..mid]
+// Second subarray is arr[mid+1..end]
+void merge(int array[], int const left, int const mid, int const right)
+{
+	auto const subArrayOne = mid - left + 1;
+	auto const subArrayTwo = right - mid;
+
+	// Create temp arrays
+	auto *leftArray = new int[subArrayOne],
+		*rightArray = new int[subArrayTwo];
+
+	// Copy data to temp arrays leftArray[] and rightArray[]
+	for (auto i = 0; i < subArrayOne; i++)
+		leftArray[i] = array[left + i];
+	for (auto j = 0; j < subArrayTwo; j++)
+		rightArray[j] = array[mid + 1 + j];
+
+	auto indexOfSubArrayOne = 0, // Initial index of first sub-array
+		indexOfSubArrayTwo = 0; // Initial index of second sub-array
+	int indexOfMergedArray = left; // Initial index of merged array
+
+	// Merge the temp arrays back into array[left..right]
+	while (indexOfSubArrayOne < subArrayOne && indexOfSubArrayTwo < subArrayTwo) {
+		if (leftArray[indexOfSubArrayOne] <= rightArray[indexOfSubArrayTwo]) {
+			array[indexOfMergedArray] = leftArray[indexOfSubArrayOne];
+			indexOfSubArrayOne++;
+		}
+		else {
+			array[indexOfMergedArray] = rightArray[indexOfSubArrayTwo];
+			indexOfSubArrayTwo++;
+		}
+		indexOfMergedArray++;
+	}
+	// Copy the remaining elements of
+	// left[], if there are any
+	while (indexOfSubArrayOne < subArrayOne) {
+		array[indexOfMergedArray] = leftArray[indexOfSubArrayOne];
+		indexOfSubArrayOne++;
+		indexOfMergedArray++;
+	}
+	// Copy the remaining elements of
+	// right[], if there are any
+	while (indexOfSubArrayTwo < subArrayTwo) {
+		array[indexOfMergedArray] = rightArray[indexOfSubArrayTwo];
+		indexOfSubArrayTwo++;
+		indexOfMergedArray++;
+	}
+}
+
+// begin is for left index and end is
+// right index of the sub-array
+// of arr to be sorted */
+void mergeSort(int array[], int const begin, int const end)
+{
+	if (begin >= end)
+		return; // Returns recursively
+
+	auto mid = begin + (end - begin) / 2;
+	mergeSort(array, begin, mid);
+	mergeSort(array, mid + 1, end);
+	merge(array, begin, mid, end);
+}
+
+// UTILITY FUNCTIONS
+// Function to print an array
+void printArray(int A[], int size)
+{
+	for (auto i = 0; i < size; i++)
+		cout << A[i] << " ";
+}
+
+// Driver code
+int main()
+{
+	int arr[] = { 12, 11, 13, 5, 6, 7 };
+	auto arr_size = sizeof(arr) / sizeof(arr[0]);
+
+	cout << "Given array is \n";
+	printArray(arr, arr_size);
+
+	mergeSort(arr, 0, arr_size - 1);
+
+	cout << "\nSorted array is \n";
+	printArray(arr, arr_size);
+	return 0;
+}
+
+// This code is contributed by Mayank Tyagi
+// This code was revised by Joshua Estes
+__________________________________________________________________________________________
+/* C++ program to solve N Queen Problem using
+backtracking */
+
+#include <bits/stdc++.h>
+#define N 4
+using namespace std;
+
+/* A utility function to print solution */
+void printSolution(int board[N][N])
+{
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < N; j++)
+			cout << " " << board[i][j] << " ";
+		printf("\n");
+	}
+}
+
+/* A utility function to check if a queen can
+be placed on board[row][col]. Note that this
+function is called when "col" queens are
+already placed in columns from 0 to col -1.
+So we need to check only left side for
+attacking queens */
+bool isSafe(int board[N][N], int row, int col)
+{
+	int i, j;
+
+	/* Check this row on left side */
+	for (i = 0; i < col; i++)
+		if (board[row][i])
+			return false;
+
+	/* Check upper diagonal on left side */
+	for (i = row, j = col; i >= 0 && j >= 0; i--, j--)
+		if (board[i][j])
+			return false;
+
+	/* Check lower diagonal on left side */
+	for (i = row, j = col; j >= 0 && i < N; i++, j--)
+		if (board[i][j])
+			return false;
+
+	return true;
+}
+
+/* A recursive utility function to solve N
+Queen problem */
+bool solveNQUtil(int board[N][N], int col)
+{
+	/* base case: If all queens are placed
+	then return true */
+	if (col >= N)
+		return true;
+
+	/* Consider this column and try placing
+	this queen in all rows one by one */
+	for (int i = 0; i < N; i++) {
+		/* Check if the queen can be placed on
+		board[i][col] */
+		if (isSafe(board, i, col)) {
+			/* Place this queen in board[i][col] */
+			board[i][col] = 1;
+
+			/* recur to place rest of the queens */
+			if (solveNQUtil(board, col + 1))
+				return true;
+
+			/* If placing queen in board[i][col]
+			doesn't lead to a solution, then
+			remove queen from board[i][col] */
+			board[i][col] = 0; // BACKTRACK
+		}
+	}
+
+	/* If the queen cannot be placed in any row in
+		this column col then return false */
+	return false;
+}
+
+/* This function solves the N Queen problem using
+Backtracking. It mainly uses solveNQUtil() to
+solve the problem. It returns false if queens
+cannot be placed, otherwise, return true and
+prints placement of queens in the form of 1s.
+Please note that there may be more than one
+solutions, this function prints one of the
+feasible solutions.*/
+bool solveNQ()
+{
+	int board[N][N] = { { 0, 0, 0, 0 },
+						{ 0, 0, 0, 0 },
+						{ 0, 0, 0, 0 },
+						{ 0, 0, 0, 0 } };
+
+	if (solveNQUtil(board, 0) == false) {
+		cout << "Solution does not exist";
+		return false;
+	}
+
+	printSolution(board);
+	return true;
+}
+
+// driver program to test above function
+int main()
+{
+	solveNQ();
+	return 0;
+}
+
+// This code is contributed by Aditya Kumar (adityakumar129)
+__________________________________________________________________________________________/*
+ * C++ Program to Count lines in a file
+ */
+ 
+#include<iostream>
+#include<fstream>
+using namespace std;
+ 
+int main()
+{
+    int count = 0;
+    string line;
+ 
+    /* Creating input filestream */ 
+    ifstream file("main.cpp");
+    while (getline(file, line))
+        count++;
+ 
+    cout << "Numbers of lines in the file : " << count << endl;
+    return 0;
+}
+__________________________________________________________________________________________// Dynamic Programming code for Optimal Binary Search
+// Tree Problem
+#include <stdio.h>
+#include <limits.h>
+
+// A utility function to get sum of array elements
+// freq[i] to freq[j]
+int sum(int freq[], int i, int j);
+
+/* A Dynamic Programming based function that calculates
+minimum cost of a Binary Search Tree. */
+int optimalSearchTree(int keys[], int freq[], int n)
+{
+	/* Create an auxiliary 2D matrix to store results
+	of subproblems */
+	int cost[n][n];
+
+	/* cost[i][j] = Optimal cost of binary search tree
+	that can be formed from keys[i] to keys[j].
+	cost[0][n-1] will store the resultant cost */
+
+	// For a single key, cost is equal to frequency of the key
+	for (int i = 0; i < n; i++)
+		cost[i][i] = freq[i];
+
+	// Now we need to consider chains of length 2, 3, ... .
+	// L is chain length.
+	for (int L=2; L<=n; L++)
+	{
+		// i is row number in cost[][]
+		for (int i=0; i<=n-L+1; i++)
+		{
+			// Get column number j from row number i and
+			// chain length L
+			int j = i+L-1;
+			cost[i][j] = INT_MAX;
+
+			// Try making all keys in interval keys[i..j] as root
+			for (int r=i; r<=j; r++)
+			{
+			// c = cost when keys[r] becomes root of this subtree
+			int c = ((r > i)? cost[i][r-1]:0) +
+					((r < j)? cost[r+1][j]:0) +
+					sum(freq, i, j);
+			if (c < cost[i][j])
+				cost[i][j] = c;
+			}
+		}
+	}
+	return cost[0][n-1];
+}
+
+// A utility function to get sum of array elements
+// freq[i] to freq[j]
+int sum(int freq[], int i, int j)
+{
+	int s = 0;
+	for (int k = i; k <=j; k++)
+	s += freq[k];
+	return s;
+}
+
+// Driver program to test above functions
+int main()
+{
+	int keys[] = {10, 12, 20};
+	int freq[] = {34, 8, 50};
+	int n = sizeof(keys)/sizeof(keys[0]);
+	printf("Cost of Optimal BST is %d ",
+				optimalSearchTree(keys, freq, n));
+	return 0;
+}
+__________________________________________________________________________________________
+#include <stdio.h>
+#include <stdlib.h>
+
+struct Node {
+    int coeff;
+    int exp;
+    struct Node * next;
+};
+
+struct Node * head1 = NULL;
+struct Node * head2 = NULL;
+struct Node * head3 = NULL;
+
+struct Node * createNode(int c, int e) {
+    struct Node * p;
+    p = (struct Node*)malloc(sizeof(struct Node *));
+    if (p == NULL) {
+       printf("Error: malloc unsuccessful\n");
+       return NULL;
+    } else {
+       p->coeff = c;
+       p->exp = e;
+    }
+    p->next = NULL;
+    return p;
+}
+
+void insert(int res1, int res2, struct Node **hdr) {
+    struct Node * p = *hdr; // Current for navigation 
+    struct Node * q; // Previous for navigation
+    struct Node * r; // New node
+    
+    r = createNode(res1, res2); // Build a new node
+    if ((*hdr == NULL)|| ((*hdr)->exp < res2)) {
+        *hdr = r; // Place the new node as header 
+        (*hdr)->next = p; // Set next to old header 
+        return;
+    }
+
+    while (p != NULL) {
+        q = p; // Save p's old value 
+        if (q->exp == res2) { 
+             // Same exp value, add coefficients 
+             q->coeff += r->coeff;
+             return;
+        } 
+        p = p->next; // Go to the next node
+        if (p == NULL || p->exp < res2) {
+            q->next = r;  // Place new node as the last node
+            r->next = p;
+            return;
+        } 
+   }
+}
+
+void multiply(struct Node ** hdr, struct Node *m1, struct Node *m2) {
+     struct Node *p = m1, *q = m2;
+     int res1, res2;
+     if (m1 == NULL && m2 == NULL) 
+         return; // No multiplication
+     if (m1 == NULL) {
+         *hdr = m2; // No multiplication
+         return;
+     }
+     if (m2 == NULL) {
+         *hdr = m1; // No multiplication
+         return;
+     }
+     while (p != NULL) {// Outer loop
+          q = m2; // Multiplier
+          while (q != NULL) { // Inner loop
+              res1 = p->coeff * q->coeff;
+              res2 = p->exp + q->exp;
+             // printf("res1=%d, res2=%d\n",res1,res2);
+              insert(res1,res2,hdr);
+              q = q->next;
+          }
+          p = p->next;
+     }
+     return;
+}
+
+void printPolynomial(struct Node* hdr) {
+    struct Node *p = hdr;
+
+    printf("%dx^%d", p->coeff,p->exp);
+    p = p->next;
+    while (p != NULL) {
+        if(p->coeff < 0)  
+           printf("%dx^%d", p->coeff,p->exp);
+        else 
+           printf("+%dx^%d", p->coeff,p->exp);
+        p = p->next;
+    }
+    printf("\n");
+    return;
+}
+void main() {
+    struct Node *p;
+    int i, cnt, cp, ep;
+    
+    printf("Enter multiplicand\n"); 
+    printf("Enter the number of coefficients: ");
+    scanf("%d",&cnt);
+    for (i = 0; i < cnt; i++) {
+        printf("Enter coefficient %d: ",i);
+        scanf("%d",&cp);
+        printf("Enter exponent %d: ",i);
+        scanf("%d",&ep);
+        insert(cp,ep,&head1);
+    }
+    printf("\n");
+
+    printf("Enter multiplier\n"); 
+    printf("Enter the number of coefficients: ");
+    scanf("%d",&cnt);
+    for (i = 0; i < cnt; i++) {
+        printf("Enter coefficient %d: ",i);
+        scanf("%d",&cp);
+        printf("Enter exponent %d: ",i);
+        scanf("%d",&ep);
+        insert(cp,ep,&head2);
+    }  
+    printf("First polynomial\n"); 
+    printf("----------------------\n"); 
+    printPolynomial(head1); 
+
+    printf("Second polynomial\n"); 
+    printf("----------------------\n"); 
+    printPolynomial(head2); 
+
+    multiply(&head3,head1,head2); 
+    printf("Result of multiplying polynomials\n"); 
+    printf("----------------------\n"); 
+    printPolynomial(head3); 
+
+}
+
+__________________________________________________________________________________________// A C++ program for Prim's Minimum
+// Spanning Tree (MST) algorithm. The program is
+// for adjacency matrix representation of the graph
+#include <bits/stdc++.h>
+using namespace std;
+
+// Number of vertices in the graph
+#define V 5
+
+// A utility function to find the vertex with
+// minimum key value, from the set of vertices
+// not yet included in MST
+int minKey(int key[], bool mstSet[])
+{
+	// Initialize min value
+	int min = INT_MAX, min_index;
+
+	for (int v = 0; v < V; v++)
+		if (mstSet[v] == false && key[v] < min)
+			min = key[v], min_index = v;
+
+	return min_index;
+}
+
+// A utility function to print the
+// constructed MST stored in parent[]
+void printMST(int parent[], int graph[V][V])
+{
+	cout<<"Edge \tWeight\n";
+	for (int i = 1; i < V; i++)
+		cout<<parent[i]<<" - "<<i<<" \t"<<graph[i][parent[i]]<<" \n";
+}
+
+// Function to construct and print MST for
+// a graph represented using adjacency
+// matrix representation
+void primMST(int graph[V][V])
+{
+	// Array to store constructed MST
+	int parent[V];
+	
+	// Key values used to pick minimum weight edge in cut
+	int key[V];
+	
+	// To represent set of vertices included in MST
+	bool mstSet[V];
+
+	// Initialize all keys as INFINITE
+	for (int i = 0; i < V; i++)
+		key[i] = INT_MAX, mstSet[i] = false;
+
+	// Always include first 1st vertex in MST.
+	// Make key 0 so that this vertex is picked as first vertex.
+	key[0] = 0;
+	parent[0] = -1; // First node is always root of MST
+
+	// The MST will have V vertices
+	for (int count = 0; count < V - 1; count++)
+	{
+		// Pick the minimum key vertex from the
+		// set of vertices not yet included in MST
+		int u = minKey(key, mstSet);
+
+		// Add the picked vertex to the MST Set
+		mstSet[u] = true;
+
+		// Update key value and parent index of
+		// the adjacent vertices of the picked vertex.
+		// Consider only those vertices which are not
+		// yet included in MST
+		for (int v = 0; v < V; v++)
+
+			// graph[u][v] is non zero only for adjacent vertices of m
+			// mstSet[v] is false for vertices not yet included in MST
+			// Update the key only if graph[u][v] is smaller than key[v]
+			if (graph[u][v] && mstSet[v] == false && graph[u][v] < key[v])
+				parent[v] = u, key[v] = graph[u][v];
+	}
+
+	// print the constructed MST
+	printMST(parent, graph);
+}
+
+// Driver code
+int main()
+{
+	/* Let us create the following graph
+		2 3
+	(0)--(1)--(2)
+	| / \ |
+	6| 8/ \5 |7
+	| / \ |
+	(3)-------(4)
+			9	 */
+	int graph[V][V] = { { 0, 2, 0, 6, 0 },
+						{ 2, 0, 3, 8, 5 },
+						{ 0, 3, 0, 0, 7 },
+						{ 6, 8, 0, 0, 9 },
+						{ 0, 5, 7, 9, 0 } };
+
+	// Print the solution
+	primMST(graph);
+
+	return 0;
+}
+
+// This code is contributed by rathbhupendra
+__________________________________________________________________________________________#include<stdio.h>
+#include<stdlib.h>
+#include<time.h>
+#define MAX_SIZE 20 
+
+typedef struct heap{
+    int *arr; // Storage for elements
+    int nElement;    // No elements present
+    int capacity; // Capacity of heap
+    int type; // 0 for min heap, 1 for max heap
+} HEAP;
+
+// Function headers for heap operations 
+HEAP *CreateHeap(int, int); // Creates heap of given capacity and type
+void insert(HEAP *, int); // Inserts element into heap 
+void printHeap(HEAP *); // Prints a heap
+void heapifyBottomTop(HEAP *, int); // Decrease or increase value 
+void heapifyTopBottom(HEAP *, int); // Decrease or increase value 
+int deleteMin(HEAP *); // Deletes minimum element
+int randInput(); // Creates random input for insertion 
+void decreaseKey(HEAP *, int, int); 
+void increaseKey(HEAP *, int, int); 
+int isEmpty(HEAP *);
+
+// Main program
+int main(){
+    int i;
+    HEAP *heap = CreateHeap(MAX_SIZE, 0); //Min Heap for max heap use 1
+    if( heap == NULL ){
+        printf("Error: create unsuccessful\n");
+        return -1;
+    }
+    for(i = 0; i < 9; i++) 
+        insert(heap, randInput()+i); // Get  10 random values in heap
+
+    printHeap(heap); // Print heap contents
+
+    decreaseKey(heap, 3, 3);
+    printHeap(heap);
+    increaseKey(heap, 3, 3);
+    printHeap(heap);
+
+
+    for(i = 5; i >= 0; i--){
+        printf("Deleted minimum: %d\n", deleteMin(heap));
+        printHeap(heap);
+    }
+
+
+    return 0;
+}
+
+int isEmpty(HEAP *h) {
+    return h->nElement == 0;
+}
+
+int randInput(){ 
+    time_t t;  // Defined in <time.h>
+    srand((unsigned) time(&t)); // Seeding value 
+    return rand() % 100;        // Get between 1 to 100
+}
+
+HEAP *CreateHeap(int capacity,int type){
+    HEAP *h = (HEAP * ) malloc(sizeof(HEAP)); 
+    
+    // Terminate if memory allocation fails 
+    if(h == NULL){
+        printf("Memory Error!");
+        return NULL;
+    }
+    h->type = type;
+    h->nElement = 0;  // Empty heap
+    h->capacity = capacity;
+    h->arr = (int *) malloc(capacity*sizeof(int)); //size in bytes
+
+    //Check if allocation succeed
+    if ( h->arr == NULL){
+        printf("Error: malloc failed.\n");
+        return NULL;
+    }
+    return h;
+}
+
+void insert(HEAP *h, int key){
+    if( h->nElement < h->capacity){
+        h->arr[h->nElement] = key;
+        heapifyBottomTop(h, h->nElement);
+        h->nElement++;
+    }
+}
+
+void heapifyBottomTop(HEAP *h,int index){
+    int temp;
+    int parent = (index-1)/2;
+
+    if(h->arr[parent] > h->arr[index]){
+        //swap and recursive call
+        temp = h->arr[parent];
+        h->arr[parent] = h->arr[index];
+        h->arr[index] = temp;
+        heapifyBottomTop(h,parent);
+    }
+}
+
+void heapifyTopBottom(HEAP *h, int parent){
+    int left = 2*parent + 1;
+    int right = 2*parent + 2;
+    int min;
+    int temp;
+
+    if(left >= h->nElement || left < 0)
+        left = -1;
+    if(right >= h->nElement || right < 0)
+        right = -1;
+
+    if(left != -1 && h->arr[left] < h->arr[parent])
+        min=left;
+    else
+        min =parent;
+    if(right != -1 && h->arr[right] < h->arr[min])
+        min = right;
+
+    if(min != parent){
+        temp = h->arr[min];
+        h->arr[min] = h->arr[parent];
+        h->arr[parent] = temp;
+
+        // Recursive  call
+        heapifyTopBottom(h, min);
+    }
+}
+
+int deleteMin(HEAP *h){
+    int pop;
+    if(isEmpty(h)){
+        printf("\nHEAP is Empty\n");
+        return -1;
+    }
+    // Replace first node by last and delete last
+    pop = h->arr[0];
+    h->arr[0] = h->arr[h->nElement-1];
+    h->nElement--;
+    heapifyTopBottom(h, 0);
+    return pop;
+}
+
+void printHeap(HEAP *h){
+    int i;
+    printf("Heap\n");
+    for(i = 0; i < h->nElement; i++){
+        printf("%d, ",h->arr[i]);
+    }
+    printf("\n");
+}
+
+
+void decreaseKey(HEAP *h, int index, int val) {
+    
+    if (isEmpty(h)) {
+        printf("Error: heap is empty\n"); 
+        return;
+    }
+    h->arr[index] -= val;
+    if (h->type == 0) 
+         heapifyBottomTop(h, index);
+    else 
+         heapifyTopBottom(h, index);
+}
+
+void increaseKey(HEAP *h, int index, int val) {
+    
+    if (isEmpty(h)) {
+        printf("Error: heap is empty\n"); 
+        return;
+    }
+    h->arr[index] += val;
+    if (h->type == 0) 
+         heapifyTopBottom(h, index);
+    else 
+         heapifyBottomTop(h, index);
+}
+__________________________________________________________________________________________/* C++ implementation of QuickSort */
+#include <bits/stdc++.h>
+using namespace std;
+
+// A utility function to swap two elements
+void swap(int* a, int* b)
+{
+	int t = *a;
+	*a = *b;
+	*b = t;
+}
+
+/* This function takes last element as pivot, places
+the pivot element at its correct position in sorted
+array, and places all smaller (smaller than pivot)
+to left of pivot and all greater elements to right
+of pivot */
+int partition (int arr[], int low, int high)
+{
+	int pivot = arr[high]; // pivot
+	int i = (low - 1); // Index of smaller element and indicates the right position of pivot found so far
+
+	for (int j = low; j <= high - 1; j++)
+	{
+		// If current element is smaller than the pivot
+		if (arr[j] < pivot)
+		{
+			i++; // increment index of smaller element
+			swap(&arr[i], &arr[j]);
+		}
+	}
+	swap(&arr[i + 1], &arr[high]);
+	return (i + 1);
+}
+
+/* The main function that implements QuickSort
+arr[] --> Array to be sorted,
+low --> Starting index,
+high --> Ending index */
+void quickSort(int arr[], int low, int high)
+{
+	if (low < high)
+	{
+		/* pi is partitioning index, arr[p] is now
+		at right place */
+		int pi = partition(arr, low, high);
+
+		// Separately sort elements before
+		// partition and after partition
+		quickSort(arr, low, pi - 1);
+		quickSort(arr, pi + 1, high);
+	}
+}
+
+/* Function to print an array */
+void printArray(int arr[], int size)
+{
+	int i;
+	for (i = 0; i < size; i++)
+		cout << arr[i] << " ";
+	cout << endl;
+}
+
+// Driver Code
+int main()
+{
+	int arr[] = {10, 7, 8, 9, 1, 5};
+	int n = sizeof(arr) / sizeof(arr[0]);
+	quickSort(arr, 0, n - 1);
+	cout << "Sorted array: \n";
+	printArray(arr, n);
+	return 0;
+}
+
+// This code is contributed by rathbhupendra
+__________________________________________________________________________________________
+    int cutRod(int price[], int N) {
+        //code here
+
+        int arr[N];
+        int dp[N+1][N+1];
+        
+        for(int i=0; i<N; i++)
+        {
+            arr[i] = i+1;
+        }
+        
+        for(int i=0; i<N+1;i++)
+        {
+            dp[i][0] = 0;
+            dp[0][i] = 0;
+        }
+        
+        for(int i=1; i<N+1;i++)
+        {
+            for(int j=1; j<N+1; j++)
+            {
+                if(arr[i-1]<=j)
+                {
+                    dp[i][j] = max(price[i-1] + dp[i][j-arr[i-1]] , dp[i-1][j] );
+                }
+                else
+                {
+                    dp[i][j] = dp[i-1][j];
+                }
+            }
+        }
+        
+        return dp[N][N];
+    }
+__________________________________________________________________________________________
+// C++ program for implementation of selection sort
+#include <bits/stdc++.h>
+using namespace std;
+
+void swap(int *xp, int *yp)
+{
+	int temp = *xp;
+	*xp = *yp;
+	*yp = temp;
+}
+
+void selectionSort(int arr[], int n)
+{
+	int i, j, min_idx;
+
+	// One by one move boundary of unsorted subarray
+	for (i = 0; i < n-1; i++)
+	{
+		// Find the minimum element in unsorted array
+		min_idx = i;
+		for (j = i+1; j < n; j++)
+		if (arr[j] < arr[min_idx])
+			min_idx = j;
+
+		// Swap the found minimum element with the first element
+		swap(&arr[min_idx], &arr[i]);
+	}
+}
+
+/* Function to print an array */
+void printArray(int arr[], int size)
+{
+	int i;
+	for (i=0; i < size; i++)
+		cout << arr[i] << " ";
+	cout << endl;
+}
+
+// Driver program to test above functions
+int main()
+{
+	int arr[] = {64, 25, 12, 22, 11};
+	int n = sizeof(arr)/sizeof(arr[0]);
+	selectionSort(arr, n);
+	cout << "Sorted array: \n";
+	printArray(arr, n);
+	return 0;
+}
+
+// This is code is contributed by rathbhupendra
+__________________________________________________________________________________________
+#include <stdlib.h>
+#include <stdio.h>
+#define MAX1 4 // row dimension
+#define MAX2 4 // column dimension
+
+// Structure to store element 
+typedef struct Node { // Structure for nonzero element
+    int row;
+    int col;
+    int val;
+    struct Node* right;
+    struct Node* down;
+} ENTRY;
+
+// Structure for column headnode 
+typedef struct cHead {
+    int colno;
+    struct Node* down;
+    struct cHead* next;
+} CHEAD;
+
+// Structure for row headnode 
+typedef struct rHead {
+    int rowno;
+    struct Node* right;
+    struct rHead* next;
+} RHEAD;
+
+
+// Structure for matrix headnode
+typedef struct spmat {
+    struct rHead* firstRow;
+    struct cHead* firstCol;
+    int nRows;
+    int nCols;
+} SPMAT;
+
+// Use for accessing whole of sparse matrix including
+// all elements which allows us to also build triplets 
+typedef struct sparse {
+    int* sp; // Storage for all elements
+    int row; // Number of nonzero elements in matrix
+    struct spmat* smat;
+    struct cHead* cHead[MAX2];
+    struct rHead* rhead[MAX1];
+    struct Node* nd;
+} SPARSE;
+
+void initSparse(SPARSE *);
+void createArray(SPARSE *);
+void printMatrix(SPARSE);
+int  count(SPARSE);
+void createTriplet(SPARSE*, SPARSE);
+void createLinkedList(SPARSE *);
+void insert(SPARSE *, SPMAT *, int, int, int);
+void printLinkedList(SPARSE);
+void delSparse(SPARSE *);
+
+void main() {
+    SPARSE s1, s2;
+
+    initSparse(&s1);
+    initSparse(&s2);
+
+    createArray(&s1);
+
+    printf("\nElements in sparse matrix: ");
+    printMatrix(s1);
+
+    createTriplet(&s2, s1);
+
+    createLinkedList(&s2);
+    printf("\n\nInformation stored in linked list :\n");
+    printLinkedList(s2);
+
+    delSparse(&s1);
+    delSparse(&s2);
+
+}
+
+// Initialize the fields of different structures
+void initSparse(SPARSE * p) {
+    int i;
+    // Create row headnodes
+    for (i = 0; i < MAX1; i++)
+        p->rhead[i] = (struct rHead*)malloc(sizeof(struct rHead));
+
+    // Initialize and link row headnodes 
+    for (i = 0; i < MAX1 - 1; i++) {
+        p->rhead[i]->next = p->rhead[i + 1];
+        p->rhead[i]->right = NULL;
+        p->rhead[i]->rowno = i;
+    }
+    p->rhead[i]->right = NULL;
+    p->rhead[i]->next = NULL;
+
+    // Create col headnodes 
+    for (i = 0; i < MAX1; i++)
+        p->cHead[i] = (struct cHead*)malloc(sizeof(struct cHead));
+
+    // Initialize and link col headnodes 
+    for (i = 0; i < MAX2 - 1; i++) {
+        p->cHead[i]->next = (struct cHead*)p->cHead[i + 1];
+        p->cHead[i]->down = NULL;
+        p->cHead[i]->colno = i;
+    }
+    p->cHead[i]->down = NULL;
+    p->cHead[i]->next = NULL;
+
+    // Create and initialize special headnode
+    p->smat = (struct spmat*)malloc(sizeof(struct spmat));
+    p->smat->firstCol = p->cHead[0];
+    p->smat->firstRow = p->rhead[0];
+    p->smat->nCols = MAX2; // No of columns
+    p->smat->nRows = MAX1; // No of row
+}
+
+// Create an array MAX1 x Max2 for matrix 
+void createArray(SPARSE * p) {
+    int n, i;
+
+    p->sp = (int*)malloc(MAX1 * MAX2 * sizeof(int));
+
+    // Read values and store in array 
+    for (i = 0; i < MAX1 * MAX2; i++) {
+        printf("Enter element no. %d:", i);
+        scanf_s("%d", &n);
+        *(p->sp + i) = n;
+    }
+}
+
+// Print the matrix
+void printMatrix(SPARSE s) {
+    int i;
+
+    // Print nonzero elements of the matrix
+    for (i = 0; i < MAX1 * MAX2; i++) {
+        // Position the cursor at a new line for every new row 
+        if (i % MAX2 == 0)
+            printf("\n");
+        printf("%d\t", *(s.sp + i));
+    }
+}
+
+// Counts the number of non-zero elements 
+int count(SPARSE s) {
+    int cnt = 0, i;
+
+    for (i = 0; i < MAX1 * MAX2; i++) {
+        if (*(s.sp + i) != 0)
+            cnt++;
+    }
+    return cnt;
+}
+
+// Creates an array of triplet for non-zero elements
+void createTriplet(SPARSE * p, SPARSE s) {
+    int r = 0, c = -1, l = -1, i;
+
+    p->row = count(s);
+    p->sp = (int*)malloc(p->row * 3 * sizeof(int));
+
+    for (i = 0; i < MAX1 * MAX2; i++) {
+        c++;
+        // sets the row and column values 
+        if (((i % MAX2) == 0) && (i != 0)) {
+            r++;
+            c = 0;
+        }
+
+        // Checks for non-zero element. Row, column and
+        // non-zero element value is assigned to the matrix
+        if (*(s.sp + i) != 0) {
+            l++;
+            *(p->sp + l++) = r; // Store row no
+            *(p->sp + l++) = c; // Store col no
+            *(p->sp + l) = *(s.sp + i); // Store value
+        }
+    }
+}
+
+// Information of triplet stored in a linked list 
+void createLinkedList(SPARSE * p) {
+    int j = 0, i;
+    for (i = 0; i < p->row; i++, j += 3)
+        insert(p, p->smat, *(p->sp + j), *(p->sp + j + 1), *(p->sp + j + 2));
+}
+
+// Inserts element to the list 
+void insert(struct sparse* p, struct spmat* smat, int r, int c, int v) {
+    struct Node* p1=NULL, * p2=NULL;
+    struct rHead* rh;
+    struct cHead* ch;
+    int i, j;
+
+    // Allocate and initialize memory for the node
+    p->nd = (struct Node*)malloc(sizeof(struct Node));
+    p->nd->col = c;
+    p->nd->row = r;
+    p->nd->val = v;
+
+    // Get the first row headnode
+    rh = smat->firstRow;
+
+    // Get the row headnode r
+    for (i = 0; i < r; i++)
+        rh = rh->next;
+    p1 = rh->right; 
+
+    // If no nonzero element yet in row r
+    if (p1 == NULL) {
+        rh->right = p->nd;
+        p->nd->right = NULL;
+    }
+    else {
+        // Go to correct column position 
+        while ((p1 != NULL) && (p1->col < c)) {
+            p2 = p1;
+            p1 = p1->right;
+        }
+        p2->right = p->nd;
+        p->nd->right = NULL;
+    }
+
+    // Link the element with col headnode for column c 
+    ch = p->smat->firstCol;
+    for (j = 0; j < c; j++)
+        ch = (struct cHead*)ch->next;
+    p1 = ch->down;
+
+    // No nonzero element yet in col c
+    if (p1 == NULL) {
+        ch->down = p->nd;
+        p->nd->down = NULL;
+    }
+    else {
+        // Link previous nonzero element in column c
+        // with next element in column c 
+        while ((p1 != NULL) && (p1->row < r)) {
+            p2 = p1;
+            p1 = p1->down;
+        }
+        p2->down = p->nd;
+        p->nd->down = NULL;
+    }
+}
+
+void printLinkedList(SPARSE s) {
+    struct Node* p;
+    // Get the first row headnode 
+    int r = s.smat->nRows;
+    int i;
+
+    for (i = 0; i < r; i++) {
+        p = s.rhead[i]->right;
+        if (p != NULL) {
+            while (p->right != NULL) {
+                printf("\nRow: %d Col: %d Val: %d\n", p->row, p->col, p->val);
+                p = p->right;
+            }
+            if (p->row == i)
+                printf("Row: %d Col: %d Val: %d\n", p->row, p->col, p->val);
+        }
+    }
+}
+
+// Deallocate memory
+void delSparse(SPARSE * p) {
+    int r = p->smat->nRows;
+    struct rHead* rh;
+    struct Node* p1, * p2;
+    int i, c;
+
+    // Deallocate memeory of nodes by traversing row-wise
+    for (i = r - 1; i >= 0; i--) {
+        rh = p->rhead[i];
+        p1 = rh->right;
+        while (p1 != NULL) {
+            p2 = p1->right;
+            free(p1);
+            p1 = p2;
+        }
+    }
+
+    // Deallocate memory of row headnodes 
+    for (i = r - 1; i >= 0; i--)
+        free(p->rhead[i]);
+
+    // Deallocate memory of col headnodes 
+    c = p->smat->nCols;
+    for (i = c - 1; i >= 0; i--)
+        free(p->cHead[i]);
+}
+__________________________________________________________________________________________#include <stdio.h>
+#include <stdlib.h>
+ 
+typedef struct node {
+    int info;
+    struct node *left, *right;
+} TNODE;
+
+TNODE * newNode(int); 
+TNODE * insertNode(TNODE *, int); 
+TNODE * searchNode(TNODE *, int); 
+TNODE * smallestNode(TNODE *); 
+TNODE * deleteNode(TNODE *, int);
+TNODE * deleteMin(TNODE *);
+
+void preOrder(TNODE *); 
+void postOrder(TNODE *); 
+void inOrder(TNODE * t); 
+void children(TNODE *, int); 
+
+int leftChild(TNODE *, int); 
+int rightChild(TNODE *, int);
+int isInternal(TNODE *); 
+int treeHeight(TNODE *); 
+int treeSize(TNODE *); 
+
+int main() {
+    TNODE * root = NULL;
+    TNODE * t;
+
+    root = insertNode(root, 50);
+    root = insertNode(root, 30);
+    root =insertNode(root, 20);
+    root =insertNode(root, 40);
+    root =insertNode(root, 70);
+    root =insertNode(root, 60);
+    root =insertNode(root, 80);
+    root =insertNode(root, 75);
+    root =insertNode(root, 58);
+    root =insertNode(root, 37);
+    root =insertNode(root, 39);
+    root =insertNode(root, 45);
+ 
+    // Print inoder list of the BST
+    printf("Inorder listing\n");
+    inOrder(root);
+    printf("\n");
+
+    // Delete a node
+    printf("----------------------\n");
+    root = deleteNode(root,20);
+    inOrder(root);
+    printf("\n");
+
+    // Put the node back
+    printf("----------------------\n");
+    root = insertNode(root,20);
+    inOrder(root);
+    printf("\n");
+
+    printf("----------------------\n");
+    children(root,30);
+    root = deleteNode(root,30);
+    inOrder(root);
+    printf("\n");
+    children(root,37);
+    printf("----------------------\n");
+
+    // Delete minimum
+    root = deleteMin(root);
+    inOrder(root);
+    printf("\n");
+    printf("----------------------\n");
+} 
+
+TNODE * newNode(int x) {
+    struct node* p = (TNODE *)malloc(sizeof(TNODE));
+    p->info = x;
+    p->left = p->right = NULL;
+    return p;
+}
+
+void preOrder(TNODE * t) {
+    if (t != NULL) {
+        printf("%d ", t->info);
+        preOrder(t->left);
+        preOrder(t->right);
+    }
+}
+
+void postOrder(TNODE * t) {
+    if (t != NULL) {
+        postOrder(t->left);
+        postOrder(t->right);
+        printf("%d ", t->info);
+    }
+}
+
+void inOrder(TNODE * t) {
+    if (t != NULL) {
+        inOrder(t->left);
+        printf("%d ", t->info);
+        inOrder(t->right);
+    }
+}
+ 
+TNODE * insertNode(TNODE * node, int info) {
+    // If the tree is empty, return a new node 
+    if (node == NULL)
+        return newNode(info);
+ 
+    // Otherwise, insert down the tree to left or righ 
+    if (info < node->info)
+        node->left = insertNode(node->left, info);
+    else if (info > node->info)
+        node->right = insertNode(node->right, info);
+ 
+    return node; // Recursion tails off 
+}
+
+TNODE * searchNode(TNODE * t, int x) { 
+    if (t == NULL) 
+        return t;
+    if (t->info == x) 
+        return t;
+    if (t->info > x)  {
+        t = searchNode(t->left, x);
+        return t;
+    }
+    if (t->info < x) { 
+        t = searchNode(t->right, x) ;
+        return t;
+    }
+
+}
+
+int leftChild(TNODE *t, int x) {
+    TNODE *p;
+    p = searchNode(t, x);
+    if (p==NULL) return -1;
+    else 
+        return p->left->info;
+}
+
+int rightChild(TNODE *t, int x) {
+    TNODE *p;
+    p = searchNode(t, x);
+    if (p==NULL) return -1;
+    else 
+        return p->right->info;
+}
+
+void children(TNODE * t, int x) {
+    TNODE *t1 = searchNode(t, x);
+    if (t1 == NULL) {
+         printf("%d is not present\n", t->info);
+         return;
+    }
+    if (t1->left != NULL)
+        printf("Left child of %d is %d \n",t1->info,t1->left->info);
+    else 
+        printf("%d Has no left child\n",t1->info);
+    if (t1->right != NULL) 
+        printf("Right child of %d is %d\n",t1->info,t1->right->info);
+    else 
+        printf("%d Has no right child\n",t1->info);
+}
+
+int isInternal(TNODE *t) {
+    int n = 0;
+    n = (t != NULL) && ((t->left != NULL) || (t->right != NULL)) ;
+    return n;
+}
+
+int treeHeight(TNODE *t) {
+   int rHeight, lHeight;
+   int maxHeight;
+   int i;
+   if(t == NULL) {
+      return 0; 
+   } else {
+      maxHeight = 0;
+      lHeight = treeHeight(t->left); 
+      rHeight = treeHeight(t->right);
+      if (rHeight > lHeight) {
+          if (maxHeight < rHeight)
+              maxHeight = rHeight; 
+      } else {
+          if (maxHeight < lHeight)
+              maxHeight = lHeight; 
+     }
+     return maxHeight + 1;
+    }
+}
+
+int treeSize(TNODE *t) {
+    int size;
+    if (t == NULL) 
+        return 0;
+    else {
+        size = 1 + treeSize(t->left) + treeSize(t->right);
+        return size;
+    }
+}
+
+TNODE * smallestNode(TNODE * node) {
+    TNODE * p = node;
+ 
+    /* loop down to find the leftmost leaf */
+    while (p && p->left != NULL)
+        p = p->left;
+ 
+    return p;
+}
+
+TNODE * deleteNode(TNODE * root, int x) {
+    TNODE * temp;
+    if (root == NULL) {
+        printf("Error: empty tree or element not present\n");
+        return root;
+    }
+ 
+    // If element is smaller than that at the root
+    // delete from the left subtree
+    if (x < root->info)
+        root->left = deleteNode(root->left, x);
+ 
+    // If element is bigger than the element at the root delete 
+    // from the right subtree
+    else if (x > root->info)
+        root->right = deleteNode(root->right, x);
+ 
+    // If element at the root equal to element to be 
+    // deleted, delete the root. 
+    else {
+        // Node has only one child or no child
+        if (root->left == NULL) {
+            temp = root->right;
+            printf("Delete %d success\n",root->info);
+            free(root);
+            return temp;
+        }
+        else if (root->right == NULL) {
+            temp = root->left;
+            printf("Delete %d success\n",root->info);
+            free(root);
+            return temp;
+        }
+ 
+        // Node with two children: get the inorder successor
+        printf("%d has two children, copy inorder successor\n",root->info);
+        temp = smallestNode(root->right);
+ 
+        // Copy the inorder successor's content to this node
+        root->info = temp->info;
+ 
+        // Delete the inorder successor
+        root->right = deleteNode(root->right, temp->info);
+    }
+    return root;
+} 
+
+TNODE * deleteMin(TNODE * root) {
+    int x = smallestNode(root)->info;
+    printf("Deleting minimum %d\n",x);
+    return deleteNode(root,x);
+}
+ 
+__________________________________________________________________________________________
+#include <stdlib.h>
+#include <stdio.h>
+typedef struct treenode {
+    int info;
+    struct treenode * left;
+    struct treenode * right;
+} TREENODE;
+
+void preOrder(TREENODE *); 
+void postOrder(TREENODE *); 
+void inOrder(TREENODE *);
+TREENODE * create(); 
+TREENODE * search(TREENODE *, int); 
+int isInternal(TREENODE *);
+int treeHeight(TREENODE *);
+int treeSize(TREENODE *);
+
+// Main program to check if all functions work as needed
+int main() {
+    TREENODE * t, *t2;
+    int x;
+
+    t = create();
+    preOrder(t);
+    printf("\n");
+     
+    inOrder(t);
+    printf("\n");
+
+    postOrder(t);
+    printf("\n");
+
+    printf("Give element to find: ");
+    scanf("%d", &x);
+
+    t2 = search(t,x); 
+    if (t2 != NULL) 
+       printf("Found %d\n",t2->info);
+    else 
+       printf("%d not found\n",x);
+
+    printf("Give element to find: ");
+    scanf("%d", &x);
+    t2 = search(t,x); 
+    if (t2 != NULL) 
+       printf("Found %d\n",t2->info);
+    else 
+       printf("%d not found\n",x);
+    printf("Height = %d\n",treeHeight(t));
+    printf("Size = %d\n",treeSize(t));
+    printf("Left tree size = %d\n",treeSize(t->left));
+    printf("Right tree size = %d\n",treeSize(t->right));
+
+}
+
+void preOrder(TREENODE *t) {
+    if (t != NULL) {
+        printf("%d\t", t->info);
+        preOrder(t->left);
+        preOrder(t->right);
+    }
+}
+
+void postOrder(TREENODE *t) {
+    if (t != NULL) {
+        postOrder(t->left);
+        postOrder(t->right);
+        printf("%d\t", t->info);
+    }
+}
+
+void inOrder(TREENODE *t) {
+    if (t != NULL) {
+        inOrder(t->left);
+        printf("%d\t", t->info);
+        inOrder(t->right);
+    }
+}
+
+TREENODE * create() {
+    int x;
+    TREENODE *p;
+    printf("Enter data (-1 for no data): ") ;
+    scanf("%d", &x);
+    if (x == -1)
+       return NULL;
+    p = (TREENODE *) malloc(sizeof(TREENODE)) ;
+    if (p == NULL) {
+        printf("Error in malloc\n");
+        exit(1);
+    }
+    p->info = x;
+    printf("Enter leftchild of %d: \n", x) ;
+    p->left = create() ;
+    printf("Enter rightchild of %d: \n", x ) ;
+    p->right = create() ;
+    return p;
+}
+
+TREENODE * search(TREENODE * t, int x) { 
+    TREENODE *p ;
+    if ((t == NULL) || ( t->info == x))
+       return t ;
+    p = search(t->left, x);
+    if (p == NULL) 
+        p = search(t->right, x) ;
+    return p;
+}
+
+int isInternal(TREENODE *t) {
+    int n = 0;
+    n = (t != NULL) && ((t->left != NULL) || (t->right != NULL)) ;
+    return n;
+}
+
+int treeHeight(TREENODE *t) {
+   int rHeight, lHeight;
+   int maxHeight;
+   int i;
+   if(t == NULL) {
+     return 0; 
+   } else {
+      maxHeight = 0;
+      lHeight = treeHeight(t->left); 
+      rHeight = treeHeight(t->right);
+      if (rHeight > lHeight) {
+          if (maxHeight < rHeight)
+              maxHeight = rHeight; 
+      } else {
+          if (maxHeight < lHeight)
+              maxHeight = lHeight; 
+     }
+     return maxHeight + 1;
+    }
+}
+
+int treeSize(TREENODE *t) {
+    int size;
+    if (t == NULL) 
+        return 0;
+    else {
+        size = 1 + treeSize(t->left) + treeSize(t->right);
+        return size;
+    }
+}
+
+
+__________________________________________________________________________________________// C++ program to solve Traveling Salesman Problem
+// using Branch and Bound.
+#include <bits/stdc++.h>
+using namespace std;
+const int N = 4;
+
+// final_path[] stores the final solution ie, the
+// path of the salesman.
+int final_path[N+1];
+
+// visited[] keeps track of the already visited nodes
+// in a particular path
+bool visited[N];
+
+// Stores the final minimum weight of shortest tour.
+int final_res = INT_MAX;
+
+// Function to copy temporary solution to
+// the final solution
+void copyToFinal(int curr_path[])
+{
+	for (int i=0; i<N; i++)
+		final_path[i] = curr_path[i];
+	final_path[N] = curr_path[0];
+}
+
+// Function to find the minimum edge cost
+// having an end at the vertex i
+int firstMin(int adj[N][N], int i)
+{
+	int min = INT_MAX;
+	for (int k=0; k<N; k++)
+		if (adj[i][k]<min && i != k)
+			min = adj[i][k];
+	return min;
+}
+
+// function to find the second minimum edge cost
+// having an end at the vertex i
+int secondMin(int adj[N][N], int i)
+{
+	int first = INT_MAX, second = INT_MAX;
+	for (int j=0; j<N; j++)
+	{
+		if (i == j)
+			continue;
+
+		if (adj[i][j] <= first)
+		{
+			second = first;
+			first = adj[i][j];
+		}
+		else if (adj[i][j] <= second &&
+				adj[i][j] != first)
+			second = adj[i][j];
+	}
+	return second;
+}
+
+// function that takes as arguments:
+// curr_bound -> lower bound of the root node
+// curr_weight-> stores the weight of the path so far
+// level-> current level while moving in the search
+//		 space tree
+// curr_path[] -> where the solution is being stored which
+//			 would later be copied to final_path[]
+void TSPRec(int adj[N][N], int curr_bound, int curr_weight,
+			int level, int curr_path[])
+{
+	// base case is when we have reached level N which
+	// means we have covered all the nodes once
+	if (level==N)
+	{
+		// check if there is an edge from last vertex in
+		// path back to the first vertex
+		if (adj[curr_path[level-1]][curr_path[0]] != 0)
+		{
+			// curr_res has the total weight of the
+			// solution we got
+			int curr_res = curr_weight +
+					adj[curr_path[level-1]][curr_path[0]];
+
+			// Update final result and final path if
+			// current result is better.
+			if (curr_res < final_res)
+			{
+				copyToFinal(curr_path);
+				final_res = curr_res;
+			}
+		}
+		return;
+	}
+
+	// for any other level iterate for all vertices to
+	// build the search space tree recursively
+	for (int i=0; i<N; i++)
+	{
+		// Consider next vertex if it is not same (diagonal
+		// entry in adjacency matrix and not visited
+		// already)
+		if (adj[curr_path[level-1]][i] != 0 &&
+			visited[i] == false)
+		{
+			int temp = curr_bound;
+			curr_weight += adj[curr_path[level-1]][i];
+
+			// different computation of curr_bound for
+			// level 2 from the other levels
+			if (level==1)
+			curr_bound -= ((firstMin(adj, curr_path[level-1]) +
+							firstMin(adj, i))/2);
+			else
+			curr_bound -= ((secondMin(adj, curr_path[level-1]) +
+							firstMin(adj, i))/2);
+
+			// curr_bound + curr_weight is the actual lower bound
+			// for the node that we have arrived on
+			// If current lower bound < final_res, we need to explore
+			// the node further
+			if (curr_bound + curr_weight < final_res)
+			{
+				curr_path[level] = i;
+				visited[i] = true;
+
+				// call TSPRec for the next level
+				TSPRec(adj, curr_bound, curr_weight, level+1,
+					curr_path);
+			}
+
+			// Else we have to prune the node by resetting
+			// all changes to curr_weight and curr_bound
+			curr_weight -= adj[curr_path[level-1]][i];
+			curr_bound = temp;
+
+			// Also reset the visited array
+			memset(visited, false, sizeof(visited));
+			for (int j=0; j<=level-1; j++)
+				visited[curr_path[j]] = true;
+		}
+	}
+}
+
+// This function sets up final_path[]
+void TSP(int adj[N][N])
+{
+	int curr_path[N+1];
+
+	// Calculate initial lower bound for the root node
+	// using the formula 1/2 * (sum of first min +
+	// second min) for all edges.
+	// Also initialize the curr_path and visited array
+	int curr_bound = 0;
+	memset(curr_path, -1, sizeof(curr_path));
+	memset(visited, 0, sizeof(curr_path));
+
+	// Compute initial bound
+	for (int i=0; i<N; i++)
+		curr_bound += (firstMin(adj, i) +
+					secondMin(adj, i));
+
+	// Rounding off the lower bound to an integer
+	curr_bound = (curr_bound&1)? curr_bound/2 + 1 :
+								curr_bound/2;
+
+	// We start at vertex 1 so the first vertex
+	// in curr_path[] is 0
+	visited[0] = true;
+	curr_path[0] = 0;
+
+	// Call to TSPRec for curr_weight equal to
+	// 0 and level 1
+	TSPRec(adj, curr_bound, 0, 1, curr_path);
+}
+
+// Driver code
+int main()
+{
+	//Adjacency matrix for the given graph
+	int adj[N][N] = { {0, 10, 15, 20},
+		{10, 0, 35, 25},
+		{15, 35, 0, 30},
+		{20, 25, 30, 0}
+	};
+
+	TSP(adj);
+
+	printf("Minimum cost : %d\n", final_res);
+	printf("Path Taken : ");
+	for (int i=0; i<=N; i++)
+		printf("%d ", final_path[i]);
+
+	return 0;
+}
+__________________________________________________________________________________________
+// CPP program to implement traveling salesman
+// problem using naive approach.
+#include <bits/stdc++.h>
+using namespace std;
+#define V 4
+
+// implementation of traveling Salesman Problem
+int travllingSalesmanProblem(int graph[][V], int s)
+{
+	// store all vertex apart from source vertex
+	vector<int> vertex;
+	for (int i = 0; i < V; i++)
+		if (i != s)
+			vertex.push_back(i);
+
+	// store minimum weight Hamiltonian Cycle.
+	int min_path = INT_MAX;
+	do {
+
+		// store current Path weight(cost)
+		int current_pathweight = 0;
+
+		// compute current path weight
+		int k = s;
+		for (int i = 0; i < vertex.size(); i++) {
+			current_pathweight += graph[k][vertex[i]];
+			k = vertex[i];
+		}
+		current_pathweight += graph[k][s];
+
+		// update minimum
+		min_path = min(min_path, current_pathweight);
+
+	} while (
+		next_permutation(vertex.begin(), vertex.end()));
+
+	return min_path;
+}
+
+// Driver Code
+int main()
+{
+	// matrix representation of graph
+	int graph[][V] = { { 0, 10, 15, 20 },
+					{ 10, 0, 35, 25 },
+					{ 15, 35, 0, 30 },
+					{ 20, 25, 30, 0 } };
+	int s = 0;
+	cout << travllingSalesmanProblem(graph, s) << endl;
+	return 0;
+}
+__________________________________________________________________________________________#include <stdio.h>
+#include <stdlib.h>
+#define SIZE 40  
+
+typedef struct queue {
+  int items[SIZE];
+  int front;
+  int rear;
+} QUEUE;
+
+QUEUE* createQueue();
+void enqueue(QUEUE* q, int);
+int dequeue(QUEUE* q);
+//void display(QUEUE* q);
+int isEmpty(QUEUE* q);
+void printQueue(QUEUE* q);
+
+
+// Structure for the adjacency list of a node
+typedef struct node {
+  int vertex;
+  struct node* next;
+} NODE;
+
+
+// Graph structure consisting of array of pointers for
+// adjacency lists, a mark or flag for each node and 
+// the total number of vertices.
+typedef struct Graph {
+  int nVertices;
+  int* visited;
+  NODE ** adjLists;
+} GRAPH;
+
+NODE* createNode(int);                  // Creates a node
+GRAPH* createGraph(int);                // Creates a graph
+
+void insertEdge(GRAPH*, int, int);      // Inserts edges 
+void deleteFromAlist(GRAPH*, int, int); // Delete from adjacency list 
+void deleteEdge(GRAPH*, int, int);      // Delete an edge of graph 
+void printGraph(GRAPH*);                // Prints graph
+void DFS(GRAPH*, int);                  // DFS of graph
+void BFS(GRAPH*, int);                  // BFS of graph
+
+int main() {
+  GRAPH* graph = createGraph(6);
+  int comp = 0;
+  int i;
+
+  insertEdge(graph, 0, 1);
+  insertEdge(graph, 0, 2);
+  insertEdge(graph, 1, 2);
+  insertEdge(graph, 2, 5);
+  insertEdge(graph, 3, 4);
+  insertEdge(graph, 1, 5);
+
+  printf("After insertion of edges: ");
+  printGraph(graph);
+
+  for (i = 0; i < 6; i++) {
+      if (graph->visited[i] == 0) {
+          comp++; // New connected component
+          printf("Component No: %d\n", comp);
+          DFS(graph, i);
+      }
+  }
+  printf("\nBegin BFS\n");
+  
+  // Unmark all marked vertices for performing BFS
+
+  for (i = 0; i < 6; i++)
+      graph->visited[i] = 0;
+  comp = 0;
+  for (i = 0; i < 6; i++) {
+      if (graph->visited[i] == 0) {
+          comp++; // New connected component
+          printf("\nComponent No: %d\n", comp);
+          BFS(graph, i);
+      }
+  }
+  return 0;
+}
+
+
+// Create a node
+NODE* createNode(int v) {
+  struct node* newNode = malloc(sizeof(NODE));
+  newNode->vertex = v;
+  newNode->next = NULL;
+  return newNode;
+}
+
+// Create graph
+GRAPH* createGraph(int vertices) {
+  int i;
+  GRAPH* graph = malloc(sizeof(GRAPH));
+  if (graph == NULL) {
+      printf("Memory allocation error\n");
+      return NULL;
+  }
+  else { 
+      graph->adjLists = malloc(vertices * sizeof(NODE*));
+      if (graph->adjLists == NULL) {
+           printf("Memory allocation error\n");
+           return NULL;
+      }
+      else { 
+           graph->visited = malloc(vertices * sizeof(int));
+           if (graph->visited == NULL) {
+              printf("Memory allocation error\n");
+              return NULL;
+           }
+      }
+  }
+  graph->nVertices = vertices;
+  for (i = 0; i < vertices; i++) {
+    graph->adjLists[i] = NULL;
+    graph->visited[i] = 0;
+  }
+  return graph;
+}
+
+void insertEdge(GRAPH* graph, int src, int dest) {
+   
+  // Add edge from src to dest
+  NODE* newNode = createNode(dest);
+  newNode->next = graph->adjLists[src];
+  graph->adjLists[src] = newNode;
+
+  // Add edge from dest to src
+  newNode = createNode(src);
+  newNode->next = graph->adjLists[dest];
+  graph->adjLists[dest] = newNode;
+}
+
+// Delete node dest from adjaceny list of src 
+void deleteFromAlist(GRAPH* graph, int src, int dest) {
+    NODE * ptr = graph->adjLists[src];
+    if (ptr == NULL) {
+        printf(" Edge %d->%d does not exist\n",src,dest);
+        return;
+    }
+    if (ptr->vertex == dest) {
+        graph->adjLists[src] = ptr->next;
+        return;
+    }
+    NODE * prev = ptr;
+    ptr = ptr->next;
+    while (ptr->vertex != dest && ptr->next != NULL) {
+       prev = ptr; 
+       ptr = ptr->next;
+    }
+    if (ptr->vertex == dest) { 
+       // printf(" deleting edge %d->%d\n",src, ptr->vertex);
+        prev->next = ptr->next;
+    }
+    else
+        printf(" Edge %d->%d does not exist\n",src,dest);
+    return;
+}
+
+// Delete src and dest from each other's adjacency
+void deleteEdge(GRAPH * graph, int src, int dest) {
+    // printf(" deleting edge (%d, %d)\n",src, dest);
+     deleteFromAlist(graph, src, dest);
+     deleteFromAlist(graph, dest, src);
+}
+
+// Print the graph
+void printGraph(GRAPH* graph) {
+  int v;
+  for (v = 0; v < graph->nVertices; v++) {
+    NODE* p = graph->adjLists[v];
+    printf("AdjList[%d]: ", v);
+
+    if (p == NULL) 
+        printf("\u03A6\n");
+    else {
+        while (p!= NULL) {
+          if (p->next == NULL)  
+              printf("%d \n", p->vertex); // Last vertex in list
+          else
+              printf("%d -> ", p->vertex); // Intermediate vertices 
+          p = p->next;
+        }
+     }
+  }
+  printf("\n");
+}
+
+void DFS(GRAPH* graph, int vertex) {
+  NODE* adjList = graph->adjLists[vertex];
+  NODE* p = adjList;
+  int currVtx; 
+  graph->visited[vertex] = 1;
+  printf("Visited %d \n", vertex);
+
+  while (p != NULL) {
+    currVtx = p->vertex;
+    printf("current vertex: %d\n",currVtx);
+    if (graph->visited[currVtx] == 0) 
+        DFS(graph, currVtx);
+    p = p->next;
+  }
+}
+
+// Create a queue
+QUEUE* createQueue() {
+  QUEUE* q = malloc(sizeof(QUEUE));
+  q->front = -1;
+  q->rear = -1;
+  return q;
+}
+
+// Check if the queue is empty
+int isEmpty(QUEUE* q) {
+  if (q->rear == -1)
+    return 1;
+  else
+    return 0;
+}
+
+// Adding elements into queue
+void enqueue(QUEUE* q, int value) {
+  if (q->rear == SIZE - 1)
+    printf("\nQueue is Full!!");
+  else {
+    if (q->front == -1)
+      q->front = 0;
+    q->rear++;
+    q->items[q->rear] = value;
+  }
+}
+
+// Removing elements from queue
+int dequeue(QUEUE* q) {
+  int item;
+  if (isEmpty(q)) {
+    printf("Queue is empty");
+    item = -1;
+  } else {
+    item = q->items[q->front];
+    q->front++;
+    if (q->front > q->rear) {
+      printf("Reinitialize queue\n");
+      q->front = q->rear = -1;
+    }
+  }
+  return item;
+}
+
+// Print the queue
+void printQueue(QUEUE* q) {
+
+  if (isEmpty(q)) {
+    printf("Queue is empty\n");
+  } else {
+    printf("\nQueue: ");
+    for (int i = q->front; i < q->rear + 1; i++) {
+      printf("%d ", q->items[i]);
+    }
+  }
+  printf("\n");
+}
+
+
+// BFS algorithm
+void BFS(GRAPH* graph, int startVtx) {
+  QUEUE* q = createQueue();
+
+  graph->visited[startVtx] = 1;
+  enqueue(q, startVtx);
+
+  while (!isEmpty(q)) {
+    printQueue(q);
+    int currVtx = dequeue(q);
+    printf("Visited %d\n", currVtx);
+
+    NODE* p = graph->adjLists[currVtx];
+
+    while (p) {
+      int adjVtx = p->vertex;
+
+      if (graph->visited[adjVtx] == 0) {
+        graph->visited[adjVtx] = 1;
+        enqueue(q, adjVtx);
+      }
+      p = p->next;
+    }
+  }
+}
+
+
+__________________________________________________________________________________________
+// Program for transitive closure
+// using Floyd Warshall Algorithm
+#include<stdio.h>
+
+// Number of vertices in the graph
+#define V 4
+
+// A function to print the solution matrix
+void printSolution(int reach[][V]);
+
+// Prints transitive closure of graph[][]
+// using Floyd Warshall algorithm
+void transitiveClosure(int graph[][V])
+{
+	/* reach[][] will be the output matrix
+	// that will finally have the
+	shortest distances between
+	every pair of vertices */
+	int reach[V][V], i, j, k;
+
+	/* Initialize the solution matrix same
+	as input graph matrix. Or
+	we can say the initial values of
+	shortest distances are based
+	on shortest paths considering
+	no intermediate vertex. */
+	for (i = 0; i < V; i++)
+		for (j = 0; j < V; j++)
+			reach[i][j] = graph[i][j];
+
+	/* Add all vertices one by one to the
+	set of intermediate vertices.
+	---> Before start of a iteration,
+		we have reachability values for
+		all pairs of vertices such that
+		the reachability values
+		consider only the vertices in
+		set {0, 1, 2, .. k-1} as
+		intermediate vertices.
+	----> After the end of a iteration,
+		vertex no. k is added to the
+			set of intermediate vertices
+			and the set becomes {0, 1, .. k} */
+	for (k = 0; k < V; k++)
+	{
+		// Pick all vertices as
+		// source one by one
+		for (i = 0; i < V; i++)
+		{
+			// Pick all vertices as
+			// destination for the
+			// above picked source
+			for (j = 0; j < V; j++)
+			{
+				// If vertex k is on a path
+				// from i to j,
+				// then make sure that the value
+				// of reach[i][j] is 1
+				reach[i][j] = reach[i][j] ||
+				(reach[i][k] && reach[k][j]);
+			}
+		}
+	}
+
+	// Print the shortest distance matrix
+	printSolution(reach);
+}
+
+/* A utility function to print solution */
+void printSolution(int reach[][V])
+{
+	printf ("Following matrix is transitive");
+	printf("closure of the given graph\n");
+	for (int i = 0; i < V; i++)
+	{
+		for (int j = 0; j < V; j++)
+		{
+			/* because "i==j means same vertex"
+			and we can reach same vertex
+			from same vertex. So, we print 1....
+			and we have not considered this in
+			Floyd Warshall Algo. so we need to
+			make this true by ourself
+			while printing transitive closure.*/
+			if(i == j)
+				printf("1 ");
+			else
+				printf ("%d ", reach[i][j]);
+		}
+		printf("\n");
+	}
+}
+
+// Driver Code
+int main()
+{
+	/* Let us create the following weighted graph
+			10
+	(0)------->(3)
+		|		 /|\
+	5 |		 |
+		|		 | 1
+	\|/		 |
+	(1)------->(2)
+			3		 */
+	int graph[V][V] = { {1, 1, 0, 1},
+						{0, 1, 1, 0},
+						{0, 0, 1, 1},
+						{0, 0, 0, 1}
+					};
+
+	// Print the solution
+	transitiveClosure(graph);
+	return 0;
+}
