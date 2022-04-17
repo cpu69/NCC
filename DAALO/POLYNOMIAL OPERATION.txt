@@ -1,0 +1,139 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+
+struct Node {
+    int coeff;
+    int exp;
+    struct Node * next;
+};
+
+struct Node * head1 = NULL;
+struct Node * head2 = NULL;
+struct Node * head3 = NULL;
+
+struct Node * createNode(int c, int e) {
+    struct Node * p;
+    p = (struct Node*)malloc(sizeof(struct Node *));
+    if (p == NULL) {
+       printf("Error: malloc unsuccessful\n");
+       return NULL;
+    } else {
+       p->coeff = c;
+       p->exp = e;
+    }
+    p->next = NULL;
+    return p;
+}
+
+void insert(int res1, int res2, struct Node **hdr) {
+    struct Node * p = *hdr; // Current for navigation 
+    struct Node * q; // Previous for navigation
+    struct Node * r; // New node
+    
+    r = createNode(res1, res2); // Build a new node
+    if ((*hdr == NULL)|| ((*hdr)->exp < res2)) {
+        *hdr = r; // Place the new node as header 
+        (*hdr)->next = p; // Set next to old header 
+        return;
+    }
+
+    while (p != NULL) {
+        q = p; // Save p's old value 
+        if (q->exp == res2) { 
+             // Same exp value, add coefficients 
+             q->coeff += r->coeff;
+             return;
+        } 
+        p = p->next; // Go to the next node
+        if (p == NULL || p->exp < res2) {
+            q->next = r;  // Place new node as the last node
+            r->next = p;
+            return;
+        } 
+   }
+}
+
+void multiply(struct Node ** hdr, struct Node *m1, struct Node *m2) {
+     struct Node *p = m1, *q = m2;
+     int res1, res2;
+     if (m1 == NULL && m2 == NULL) 
+         return; // No multiplication
+     if (m1 == NULL) {
+         *hdr = m2; // No multiplication
+         return;
+     }
+     if (m2 == NULL) {
+         *hdr = m1; // No multiplication
+         return;
+     }
+     while (p != NULL) {// Outer loop
+          q = m2; // Multiplier
+          while (q != NULL) { // Inner loop
+              res1 = p->coeff * q->coeff;
+              res2 = p->exp + q->exp;
+             // printf("res1=%d, res2=%d\n",res1,res2);
+              insert(res1,res2,hdr);
+              q = q->next;
+          }
+          p = p->next;
+     }
+     return;
+}
+
+void printPolynomial(struct Node* hdr) {
+    struct Node *p = hdr;
+
+    printf("%dx^%d", p->coeff,p->exp);
+    p = p->next;
+    while (p != NULL) {
+        if(p->coeff < 0)  
+           printf("%dx^%d", p->coeff,p->exp);
+        else 
+           printf("+%dx^%d", p->coeff,p->exp);
+        p = p->next;
+    }
+    printf("\n");
+    return;
+}
+void main() {
+    struct Node *p;
+    int i, cnt, cp, ep;
+    
+    printf("Enter multiplicand\n"); 
+    printf("Enter the number of coefficients: ");
+    scanf("%d",&cnt);
+    for (i = 0; i < cnt; i++) {
+        printf("Enter coefficient %d: ",i);
+        scanf("%d",&cp);
+        printf("Enter exponent %d: ",i);
+        scanf("%d",&ep);
+        insert(cp,ep,&head1);
+    }
+    printf("\n");
+
+    printf("Enter multiplier\n"); 
+    printf("Enter the number of coefficients: ");
+    scanf("%d",&cnt);
+    for (i = 0; i < cnt; i++) {
+        printf("Enter coefficient %d: ",i);
+        scanf("%d",&cp);
+        printf("Enter exponent %d: ",i);
+        scanf("%d",&ep);
+        insert(cp,ep,&head2);
+    }  
+    printf("First polynomial\n"); 
+    printf("----------------------\n"); 
+    printPolynomial(head1); 
+
+    printf("Second polynomial\n"); 
+    printf("----------------------\n"); 
+    printPolynomial(head2); 
+
+    multiply(&head3,head1,head2); 
+    printf("Result of multiplying polynomials\n"); 
+    printf("----------------------\n"); 
+    printPolynomial(head3); 
+
+}
+
